@@ -1,0 +1,105 @@
+{
+  "name": "@ai-sdk/adaptive",
+  "version": "2.0.0-beta.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vercel/ai.git"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "dependencies": {
+    "@ai-sdk/provider": "^2.0.0-canary.14",
+    "@ai-sdk/provider-utils": "^3.0.0-canary.19",
+    "ai": "^5.0.0-canary.24",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.1.1",
+    "@changesets/cli": "^2.29.5",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@edge-runtime/vm": "^5.0.0",
+    "@types/node": "^22.16.2",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "husky": "^9.1.7",
+    "prettier": "3.6.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./adaptive-chat-language-model": {
+      "types": "./dist/adaptive-chat-language-model.d.ts",
+      "import": "./dist/adaptive-chat-language-model.mjs",
+      "require": "./dist/adaptive-chat-language-model.js"
+    },
+    "./adaptive-provider": {
+      "types": "./dist/adaptive-provider.d.ts",
+      "import": "./dist/adaptive-provider.mjs",
+      "require": "./dist/adaptive-provider.js"
+    },
+    "./adaptive-types": {
+      "types": "./dist/adaptive-types.d.ts",
+      "import": "./dist/adaptive-types.mjs",
+      "require": "./dist/adaptive-types.js"
+    },
+    "./convert-to-adaptive-chat-messages": {
+      "types": "./dist/convert-to-adaptive-chat-messages.d.ts",
+      "import": "./dist/convert-to-adaptive-chat-messages.mjs",
+      "require": "./dist/convert-to-adaptive-chat-messages.js"
+    },
+    "./map-adaptive-finish-reason": {
+      "types": "./dist/map-adaptive-finish-reason.d.ts",
+      "import": "./dist/map-adaptive-finish-reason.mjs",
+      "require": "./dist/map-adaptive-finish-reason.js"
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/vercel/ai/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist/**/*",
+    "CHANGELOG.md"
+  ],
+  "homepage": "https://ai-sdk.dev/docs",
+  "keywords": [
+    "ai"
+  ],
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "bun run clean && tsup --tsconfig tsconfig.build.json",
+    "build:watch": "bun run clean && tsup --watch",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "lint": "biome check .",
+    "lint:fix": "biome check . --write",
+    "lint:unsafe": "biome check . --write --unsafe",
+    "format": "biome format . --write",
+    "type-check": "tsc --build",
+    "test": "bun run test:node && bun run test:edge",
+    "test:update": "bun run test:node -u",
+    "test:watch": "vitest --config vitest.node.config.js",
+    "test:edge": "vitest --config vitest.edge.config.js --run",
+    "test:node": "vitest --config vitest.node.config.js --run",
+    "test:coverage": "vitest --config vitest.node.config.js --coverage",
+    "prepublishOnly": "bun run build && bun run test && bun run lint && bun run type-check",
+    "dev": "bun run build:watch",
+    "ci": "bun run lint && bun run type-check && bun run test"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "types": "./dist/index.d.ts"
+}

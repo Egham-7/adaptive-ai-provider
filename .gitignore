@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+bun.lockb
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Compiled TypeScript files (shouldn't be committed)
+*.d.ts
+*.js.map
+*.d.ts.map
+*.mjs.map
+
+# Compiled files in src (shouldn't be there)
+src/**/*.js
+src/**/*.d.ts
+src/**/*.js.map
+src/**/*.d.ts.map
+src/**/*.mjs
+src/**/*.mjs.map
+
+# Compiled config files
+tsup.config.js
+tsup.config.d.ts
+tsup.config.d.ts.map
+vitest.*.config.d.ts
+vitest.*.config.d.ts.map
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Temporary files
+.tmp/
+temp/
+*.tmp
+*.temp
+
+# Cache
+.cache/
+.turbo/
+
+# Testing
+.vitest/

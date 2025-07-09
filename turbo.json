@@ -1,0 +1,42 @@
+{
+  "extends": [
+    "//"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "test:node": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "test:edge": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "prettier-check": {
+      "outputs": []
+    },
+    "clean": {
+      "cache": false
+    },
+    "ci": {
+      "dependsOn": ["lint", "type-check", "test"],
+      "outputs": []
+    }
+  }
+}

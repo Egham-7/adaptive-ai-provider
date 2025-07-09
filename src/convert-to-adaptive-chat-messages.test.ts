@@ -1,0 +1,572 @@
+import { describe, expect, it } from 'vitest';
+import { convertToAdaptiveChatMessages } from './convert-to-adaptive-chat-messages';
+
+const base64Image = 'AAECAw==';
+const base64Audio = 'AAECAw==';
+const base64Pdf = 'AQIDBAU=';
+
+// Helper for URL
+const exampleUrl = new URL('https://example.com/document.pdf');
+
+describe('convertToAdaptiveChatMessages', () => {
+  describe('system messages', () => {
+    it('should forward system messages', () => {
+      const { messages, warnings } = convertToAdaptiveChatMessages({
+        prompt: [{ role: 'system', content: 'You are a helpful assistant.' }],
+      });
+
+      expect(messages).toEqual([
+        { role: 'system', content: 'You are a helpful assistant.' },
+      ]);
+      expect(warnings).toEqual([]);
+    });
+
+    it('should remove system messages when requested', () => {
+      const { messages, warnings } = convertToAdaptiveChatMessages({
+        prompt: [{ role: 'system', content: 'You are a helpful assistant.' }],
+        systemMessageMode: 'remove',
+      });
+
+      expect(messages).toEqual([]);
+      expect(warnings).toEqual([
+        {
+          type: 'other',
+          message: 'system messages are removed for this model',
+        },
+      ]);
+    });
+  });
+
+  describe('user messages', () => {
+    it('should convert messages with only a text part to a string content', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'user',
+            content: [{ type: 'text', text: 'Hello' }],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([{ role: 'user', content: 'Hello' }]);
+    });
+
+    it('should convert messages with image parts', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Hello' },
+              {
+                type: 'file',
+                mediaType: 'image/png',
+                data: base64Image,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Hello' },
+            {
+              type: 'image_url',
+              image_url: { url: 'data:image/png;base64,AAECAw==' },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should convert messages with image file part as URL', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                mediaType: 'image/png',
+                data: exampleUrl,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: exampleUrl.toString() },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should handle image/* media type by converting to image/jpeg', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                mediaType: 'image/*',
+                data: base64Image,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: 'data:image/jpeg;base64,AAECAw==' },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should add audio content for audio/wav file parts', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                mediaType: 'audio/wav',
+                data: base64Audio,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_audio',
+              input_audio: { data: base64Audio, format: 'wav' },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should add audio content for audio/mp3 file parts', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                mediaType: 'audio/mp3',
+                data: base64Audio,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_audio',
+              input_audio: { data: base64Audio, format: 'mp3' },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should add audio content for audio/mpeg file parts', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                mediaType: 'audio/mpeg',
+                data: base64Audio,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_audio',
+              input_audio: { data: base64Audio, format: 'mp3' },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should convert messages with PDF file parts', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                mediaType: 'application/pdf',
+                data: base64Pdf,
+                filename: 'document.pdf',
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'file',
+              file: {
+                filename: 'document.pdf',
+                file_data: 'data:application/pdf;base64,AQIDBAU=',
+              },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should use default filename for PDF file parts when not provided', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                mediaType: 'application/pdf',
+                data: base64Pdf,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'file',
+              file: {
+                filename: 'part-0.pdf',
+                file_data: 'data:application/pdf;base64,AQIDBAU=',
+              },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should throw error for unsupported file types', () => {
+      expect(() =>
+        convertToAdaptiveChatMessages({
+          prompt: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'file',
+                  mediaType: 'text/plain',
+                  data: base64Pdf,
+                },
+              ],
+            },
+          ],
+        })
+      ).toThrow('file part media type text/plain is not supported');
+    });
+
+    it('should throw error for PDF file parts with URLs', () => {
+      expect(() =>
+        convertToAdaptiveChatMessages({
+          prompt: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'file',
+                  mediaType: 'application/pdf',
+                  data: exampleUrl,
+                },
+              ],
+            },
+          ],
+        })
+      ).toThrow('PDF file parts with URLs are not supported');
+    });
+
+    it('should throw error for audio file parts with URLs', () => {
+      expect(() =>
+        convertToAdaptiveChatMessages({
+          prompt: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'file',
+                  mediaType: 'audio/wav',
+                  data: exampleUrl,
+                },
+              ],
+            },
+          ],
+        })
+      ).toThrow('Audio file parts with URLs are not supported');
+    });
+  });
+
+  describe('assistant and tool messages', () => {
+    it('should stringify arguments to tool calls', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'assistant',
+            content: [
+              {
+                type: 'tool-call',
+                args: { foo: 'bar123' },
+                toolCallId: 'quux',
+                toolName: 'thwomp',
+              },
+            ],
+          },
+          {
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId: 'quux',
+                toolName: 'thwomp',
+                result: 'legacy result',
+                content: [
+                  {
+                    type: 'text',
+                    text: 'tool result text',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: '',
+          tool_calls: [
+            {
+              type: 'function',
+              id: 'quux',
+              function: {
+                name: 'thwomp',
+                arguments: JSON.stringify({ foo: 'bar123' }),
+              },
+            },
+          ],
+        },
+        {
+          role: 'tool',
+          content: 'tool result text',
+          tool_call_id: 'quux',
+        },
+      ]);
+    });
+
+    it('should handle different tool output types', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId: 'text-tool',
+                toolName: 'text-tool',
+                result: [
+                  {
+                    type: 'text',
+                    text: 'Hello world',
+                  },
+                ],
+              },
+              {
+                type: 'tool-result',
+                toolCallId: 'mixed-tool',
+                toolName: 'mixed-tool',
+                result: [
+                  {
+                    type: 'text',
+                    text: 'text part',
+                  },
+                  {
+                    type: 'image',
+                    data: { foo: 'bar' },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'tool',
+          content: 'Hello world',
+          tool_call_id: 'text-tool',
+        },
+        {
+          role: 'tool',
+          content: 'text part{"foo":"bar"}',
+          tool_call_id: 'mixed-tool',
+        },
+      ]);
+    });
+
+    it('should handle assistant text and tool calls together', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'assistant',
+            content: [
+              { type: 'text', text: 'Here is a tool call:' },
+              {
+                type: 'tool-call',
+                args: { foo: 'bar' },
+                toolCallId: 'call-1',
+                toolName: 'tool-1',
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: 'Here is a tool call:',
+          tool_calls: [
+            {
+              type: 'function',
+              id: 'call-1',
+              function: {
+                name: 'tool-1',
+                arguments: JSON.stringify({ foo: 'bar' }),
+              },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should handle tool results without content', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId: 'empty-tool',
+                toolName: 'empty-tool',
+                result: 'some result',
+                content: undefined,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'tool',
+          content: 'some result',
+          tool_call_id: 'empty-tool',
+        },
+      ]);
+    });
+
+    it('should handle legacy tool results using result field only', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId: 'legacy-tool',
+                toolName: 'legacy-tool',
+                result: { status: 'success', data: 'legacy result' },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'tool',
+          content: '{"status":"success","data":"legacy result"}',
+          tool_call_id: 'legacy-tool',
+        },
+      ]);
+    });
+
+    it('should handle completely empty tool results', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId: 'truly-empty-tool',
+                toolName: 'truly-empty-tool',
+                result: undefined,
+                content: undefined,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([]);
+    });
+  });
+});
