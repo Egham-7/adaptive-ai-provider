@@ -2,6 +2,8 @@
 
 The **Adaptive AI Provider** for the [AI SDK](https://ai-sdk.dev/docs) contains language model support for adaptive provider selection across multiple AI services.
 
+> **Note:** This provider is only compatible with Vercel AI SDK v5.
+
 ## Setup
 
 The Adaptive AI Provider is available in the `@adaptive-llm/adaptive-ai-provider` module. You can install it with
