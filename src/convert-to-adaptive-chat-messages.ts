@@ -154,7 +154,7 @@ export function convertToAdaptiveChatMessages({
         for (const toolResponse of content) {
           const output = toolResponse.content;
           let contentValue: string;
-          
+
           if (output) {
             contentValue = output
               .map((item) =>
