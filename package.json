@@ -1,6 +1,6 @@
 {
   "name": "@adaptive-llm/adaptive-ai-provider",
-  "version": "2.0.0-beta.2",
+  "version": "0.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vercel/ai.git"
