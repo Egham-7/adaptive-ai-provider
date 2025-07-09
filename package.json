@@ -1,5 +1,5 @@
 {
-  "name": "@ai-sdk/adaptive",
+  "name": "@adaptive-llm/adaptive-ai-provider",
   "version": "2.0.0-beta.2",
   "repository": {
     "type": "git",
