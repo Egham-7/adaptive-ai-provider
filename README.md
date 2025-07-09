@@ -1,27 +1,27 @@
-# AI SDK - Adaptive Provider
+# Adaptive AI Provider
 
-The **[Adaptive provider](https://ai-sdk.dev/providers/ai-sdk-providers/adaptive)** for the [AI SDK](https://ai-sdk.dev/docs) contains language model support for adaptive provider selection across multiple AI services.
+The **Adaptive AI Provider** for the [AI SDK](https://ai-sdk.dev/docs) contains language model support for adaptive provider selection across multiple AI services.
 
 ## Setup
 
-The Adaptive provider is available in the `@ai-sdk/adaptive` module. You can install it with
+The Adaptive AI Provider is available in the `@adaptive-llm/adaptive-ai-provider` module. You can install it with
 
 ```bash
-npm i @ai-sdk/adaptive
+npm i @adaptive-llm/adaptive-ai-provider
 ```
 
 ## Provider Instance
 
-You can import the default provider instance `adaptive` from `@ai-sdk/adaptive`:
+You can import the default provider instance `adaptive` from `@adaptive-llm/adaptive-ai-provider`:
 
 ```ts
-import { adaptive } from '@ai-sdk/adaptive';
+import { adaptive } from '@adaptive-llm/adaptive-ai-provider';
 ```
 
 ## Example
 
 ```ts
-import { adaptive } from '@ai-sdk/adaptive';
+import { adaptive } from '@adaptive-llm/adaptive-ai-provider';
 import { generateText } from 'ai';
 
 const { text } = await generateText({
@@ -35,7 +35,7 @@ const { text } = await generateText({
 All models must be specified in `providername-modelname` format:
 
 ```ts
-import { adaptive } from '@ai-sdk/adaptive';
+import { adaptive } from '@adaptive-llm/adaptive-ai-provider';
 
 // OpenAI models
 adaptive('openai-gpt-4o');
@@ -59,7 +59,7 @@ adaptive('groq-llama-3.3-70b-versatile');
 You can configure the adaptive provider with custom settings:
 
 ```ts
-import { createAdaptive } from '@ai-sdk/adaptive';
+import { createAdaptive } from '@adaptive-llm/adaptive-ai-provider';
 
 const adaptive = createAdaptive({
   baseURL: 'https://your-adaptive-api.com/v1',
