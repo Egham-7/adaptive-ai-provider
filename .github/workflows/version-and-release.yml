@@ -1,0 +1,62 @@
+name: Version Bump and Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version-bumped: ${{ steps.version-bump.outputs.version-bumped }}
+      new-version: ${{ steps.version-bump.outputs.new-version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Automated Version Bump
+        id: version-bump
+        uses: phips28/gh-action-bump-version@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          minor-wording: 'feat,feature,add,new'
+          major-wording: 'BREAKING CHANGE,major,breaking'
+          patch-wording: 'fix,patch,bug'
+          tag-prefix: 'v'
+          commit-message: 'chore: bump version to {{version}} [skip ci]'
+
+  release:
+    needs: version-bump
+    if: needs.version-bump.outputs.version-bumped == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Test
+        run: bun run test
+
+      - name: Lint & Type Check
+        run: bun run ci
+
+      - name: Release
+        uses: changesets/action@v1
+        with:
+          publish: bun run changeset publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
