@@ -96,7 +96,10 @@
     "test:coverage": "vitest --config vitest.node.config.js --coverage",
     "prepublishOnly": "bun run build && bun run test && bun run lint && bun run type-check",
     "dev": "bun run build:watch",
-    "ci": "bun run lint && bun run type-check && bun run test"
+    "ci": "bun run lint && bun run type-check && bun run test",
+    "changeset": "changeset",
+    "version": "changeset version && bun run build",
+    "release": "changeset publish"
   },
   "sideEffects": false,
   "type": "module",

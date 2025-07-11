@@ -126,29 +126,15 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Automated Version Bump
-        id: version-bump
-        uses: phips28/gh-action-bump-version@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          minor-wording: 'feat,feature,add,new'
-          major-wording: 'BREAKING CHANGE,major,breaking'
-          patch-wording: 'fix,patch,bug'
-          tag-prefix: 'v'
-          commit-message: 'chore: bump version to {{version}} [skip ci]'
-
       - name: Build
-        if: steps.version-bump.outputs.bumped == 'true'
         run: bun run build
 
       - name: Create Release Pull Request or Publish to npm
-        if: steps.version-bump.outputs.bumped == 'true'
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: bun run changeset publish
-          version: bun run changeset version
+          publish: bun run release
+          version: bun run version
           commit: 'chore: release'
           title: 'chore: release'
         env:
