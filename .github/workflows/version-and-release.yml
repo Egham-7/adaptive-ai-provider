@@ -100,8 +100,8 @@ jobs:
     permissions:
       contents: write
     outputs:
-      version-bumped: ${{ steps.version-bump.outputs.version-bumped }}
-      new-version: ${{ steps.version-bump.outputs.new-version }}
+      version-bumped: ${{ steps.version-bump.outputs.bumped }}
+      new-version: ${{ steps.version-bump.outputs.newTag }}
     steps:
       - uses: actions/checkout@v4
         with:
