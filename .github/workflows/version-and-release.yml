@@ -92,44 +92,18 @@ jobs:
           directory: ./coverage
           fail_ci_if_error: false
 
-  version-bump:
-    name: Version Bump
+  version-bump-and-release:
+    name: Version Bump and Release
     needs: [test, coverage]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    outputs:
-      version-bumped: ${{ steps.version-bump.outputs.bumped }}
-      new-version: ${{ steps.version-bump.outputs.newTag }}
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Automated Version Bump
-        id: version-bump
-        uses: phips28/gh-action-bump-version@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          minor-wording: 'feat,feature,add,new'
-          major-wording: 'BREAKING CHANGE,major,breaking'
-          patch-wording: 'fix,patch,bug'
-          tag-prefix: 'v'
-          commit-message: 'chore: bump version to {{version}} [skip ci]'
-
-  release:
-    name: Release
-    needs: [test, coverage, version-bump]
-    if: needs.version-bump.outputs.version-bumped == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
           fetch-depth: 0
-          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -152,10 +126,24 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Automated Version Bump
+        id: version-bump
+        uses: phips28/gh-action-bump-version@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          minor-wording: 'feat,feature,add,new'
+          major-wording: 'BREAKING CHANGE,major,breaking'
+          patch-wording: 'fix,patch,bug'
+          tag-prefix: 'v'
+          commit-message: 'chore: bump version to {{version}} [skip ci]'
+
       - name: Build
+        if: steps.version-bump.outputs.bumped == 'true'
         run: bun run build
 
       - name: Create Release Pull Request or Publish to npm
+        if: steps.version-bump.outputs.bumped == 'true'
         id: changesets
         uses: changesets/action@v1
         with:
