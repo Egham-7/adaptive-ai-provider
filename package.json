@@ -1,12 +1,14 @@
 {
   "name": "@adaptive-llm/adaptive-ai-provider",
+  "author": "Adaptive",
   "version": "0.6.2",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vercel/ai.git"
+    "url": "git+https://github.com/Egham-7/adaptive-ai-provider.git"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "dependencies": {
     "@ai-sdk/provider": "^2.0.0-canary.14",
     "@ai-sdk/provider-utils": "^3.0.0-canary.19",
@@ -28,56 +30,29 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
   },
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    },
-    "./adaptive-chat-language-model": {
-      "types": "./dist/adaptive-chat-language-model.d.ts",
-      "import": "./dist/adaptive-chat-language-model.mjs",
-      "require": "./dist/adaptive-chat-language-model.js"
-    },
-    "./adaptive-provider": {
-      "types": "./dist/adaptive-provider.d.ts",
-      "import": "./dist/adaptive-provider.mjs",
-      "require": "./dist/adaptive-provider.js"
-    },
-    "./adaptive-types": {
-      "types": "./dist/adaptive-types.d.ts",
-      "import": "./dist/adaptive-types.mjs",
-      "require": "./dist/adaptive-types.js"
-    },
-    "./convert-to-adaptive-chat-messages": {
-      "types": "./dist/convert-to-adaptive-chat-messages.d.ts",
-      "import": "./dist/convert-to-adaptive-chat-messages.mjs",
-      "require": "./dist/convert-to-adaptive-chat-messages.js"
-    },
-    "./map-adaptive-finish-reason": {
-      "types": "./dist/map-adaptive-finish-reason.d.ts",
-      "import": "./dist/map-adaptive-finish-reason.mjs",
-      "require": "./dist/map-adaptive-finish-reason.js"
-    }
-  },
   "bugs": {
-    "url": "https://github.com/vercel/ai/issues"
+    "url": "https://github.com/Egham-7/adaptive-ai-provider/issues"
   },
   "engines": {
     "node": ">=18"
   },
   "files": [
-    "dist/**/*",
-    "CHANGELOG.md"
+    "dist/**/*"
   ],
   "homepage": "https://ai-sdk.dev/docs",
   "keywords": [
-    "ai"
+    "ai",
+    "adaptive",
+    "provider",
+    "vercel-ai",
+    "vercel",
+    "ai-sdk",
+    "intelligent model selection"
   ],
   "license": "Apache-2.0",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "bun run clean && tsup --tsconfig tsconfig.build.json",
@@ -100,8 +75,5 @@
     "changeset": "changeset",
     "version": "changeset version && bun run build",
     "release": "changeset publish"
-  },
-  "sideEffects": false,
-  "type": "module",
-  "types": "./dist/index.d.ts"
+  }
 }

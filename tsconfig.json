@@ -25,5 +25,5 @@
     "skipLibCheck": true
   },
   "include": ["."],
-  "exclude": ["dist", "build", "node_modules", ".*/**/*", "examples"]
+  "exclude": ["dist", "build", "node_modules", ".*/**/*"]
 }
