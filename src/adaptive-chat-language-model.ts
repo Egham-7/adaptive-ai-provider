@@ -40,6 +40,11 @@ const adaptiveChatResponseSchema = z.object({
           content: z.string().optional(),
           role: z.string().optional(),
           toolCalls: z.array(z.any()).optional(),
+          reasoning: z.string().optional(),
+          generated_files: z.array(z.object({
+            mediaType: z.string(),
+            data: z.string(),
+          })).optional(),
         })
         .optional(),
       finishReason: z.string().optional(),
@@ -54,6 +59,8 @@ const adaptiveChatResponseSchema = z.object({
       completion_tokens: z.number(),
       prompt_tokens: z.number(),
       total_tokens: z.number(),
+      reasoning_tokens: z.number().optional(),
+      cached_input_tokens: z.number().optional(),
     })
     .optional(),
   systemFingerprint: z.string().optional(),
@@ -66,8 +73,13 @@ const adaptiveChatChunkSchema = z.object({
     z.object({
       delta: z.object({
         content: z.string().optional(),
+        reasoning: z.string().optional(),
         role: z.string().optional(),
         toolCalls: z.array(z.any()).optional(),
+        generated_files: z.array(z.object({
+          mediaType: z.string(),
+          data: z.string(),
+        })).optional(),
       }),
       finishReason: z.string().optional(),
       index: z.number(),
@@ -81,6 +93,8 @@ const adaptiveChatChunkSchema = z.object({
       completion_tokens: z.number(),
       prompt_tokens: z.number(),
       total_tokens: z.number(),
+      reasoning_tokens: z.number().optional(),
+      cached_input_tokens: z.number().optional(),
     })
     .optional(),
   provider: z.string(),
@@ -201,6 +215,21 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       content.push({ type: 'text', text: choice.message.content });
     }
 
+    if (choice.message?.reasoning) {
+      content.push({ type: 'reasoning', text: choice.message.reasoning });
+    }
+
+
+    if (choice.message?.generated_files && choice.message.generated_files.length > 0) {
+      for (const file of choice.message.generated_files) {
+        content.push({
+          type: 'file',
+          mediaType: file.mediaType,
+          data: file.data,
+        });
+      }
+    }
+
     if (choice.message?.toolCalls && choice.message.toolCalls.length > 0) {
       for (const toolCall of choice.message.toolCalls) {
         content.push({
@@ -214,7 +243,7 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
     }
 
     // Extract usage information
-    const { prompt_tokens, completion_tokens, total_tokens } =
+    const { prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, cached_input_tokens } =
       value.usage ?? {};
 
     return {
@@ -227,6 +256,8 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
             inputTokens: prompt_tokens,
             outputTokens: completion_tokens,
             totalTokens: total_tokens,
+            reasoningTokens: reasoning_tokens,
+            cachedInputTokens: cached_input_tokens,
           }
         : { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
       providerMetadata: value.provider
@@ -315,6 +346,8 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
               state.usage.outputTokens =
                 value.usage.completion_tokens ?? undefined;
               state.usage.totalTokens = value.usage.total_tokens ?? undefined;
+              state.usage.reasoningTokens = value.usage.reasoning_tokens ?? undefined;
+              state.usage.cachedInputTokens = value.usage.cached_input_tokens ?? undefined;
             }
 
             if (value.provider) {
@@ -341,6 +374,24 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
                 type: 'text',
                 text: delta.content,
               });
+            }
+
+            if (delta.reasoning != null) {
+              controller.enqueue({
+                type: 'reasoning',
+                text: delta.reasoning,
+              });
+            }
+
+
+            if (delta.generated_files != null && Array.isArray(delta.generated_files)) {
+              for (const file of delta.generated_files) {
+                controller.enqueue({
+                  type: 'file',
+                  mediaType: file.mediaType,
+                  data: file.data,
+                });
+              }
             }
 
             if (delta.toolCalls != null && Array.isArray(delta.toolCalls)) {

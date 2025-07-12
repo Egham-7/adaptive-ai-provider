@@ -569,4 +569,119 @@ describe('convertToAdaptiveChatMessages', () => {
       expect(messages).toEqual([]);
     });
   });
+
+  describe('V2 content types', () => {
+    it('should handle reasoning content in assistant messages', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'assistant',
+            content: [
+              { type: 'text', text: 'Let me think about this.' },
+              { type: 'reasoning', text: 'First, I need to consider the implications...' },
+              { type: 'text', text: 'Based on my reasoning, the answer is 42.' },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: 'Let me think about this.Based on my reasoning, the answer is 42.',
+          reasoning: 'First, I need to consider the implications...',
+        },
+      ]);
+    });
+
+
+    it('should handle file content in assistant messages', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'assistant',
+            content: [
+              { type: 'text', text: 'I generated this image:' },
+              {
+                type: 'file',
+                mediaType: 'image/png',
+                data: 'iVBORw0KGgoAAAANS',
+              },
+              {
+                type: 'file',
+                mediaType: 'audio/wav',
+                data: new Uint8Array([1, 2, 3, 4]),
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: 'I generated this image:',
+          generated_files: [
+            {
+              mediaType: 'image/png',
+              data: 'iVBORw0KGgoAAAANS',
+            },
+            {
+              mediaType: 'audio/wav',
+              data: 'AQIDBA==', // base64 of [1,2,3,4]
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('should handle all V2 content types together', () => {
+      const { messages } = convertToAdaptiveChatMessages({
+        prompt: [
+          {
+            role: 'assistant',
+            content: [
+              { type: 'text', text: 'Here is my complete response:' },
+              { type: 'reasoning', text: 'I analyzed the data carefully...' },
+              {
+                type: 'file',
+                mediaType: 'image/jpeg',
+                data: '/9j/4AAQSkZJRgABA',
+              },
+              {
+                type: 'tool-call',
+                toolCallId: 'call-123',
+                toolName: 'calculator',
+                args: { operation: 'add', a: 1, b: 2 },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: 'Here is my complete response:',
+          reasoning: 'I analyzed the data carefully...',
+          generated_files: [
+            {
+              mediaType: 'image/jpeg',
+              data: '/9j/4AAQSkZJRgABA',
+            },
+          ],
+          tool_calls: [
+            {
+              type: 'function',
+              id: 'call-123',
+              function: {
+                name: 'calculator',
+                arguments: '{"operation":"add","a":1,"b":2}',
+              },
+            },
+          ],
+        },
+      ]);
+    });
+  });
 });

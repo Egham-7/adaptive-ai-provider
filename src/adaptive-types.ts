@@ -66,6 +66,11 @@ export interface AdaptiveChatCompletionAssistantMessage {
   role: 'assistant';
   content?: string | null;
   tool_calls?: Array<AdaptiveChatCompletionMessageToolCall>;
+  reasoning?: string;
+  generated_files?: Array<{
+    mediaType: string;
+    data: string;
+  }>;
 }
 
 /**
@@ -113,4 +118,6 @@ export interface AdaptiveChatCompletionUsage {
   prompt_tokens: number;
   completion_tokens: number;
   total_tokens: number;
+  reasoning_tokens?: number;
+  cached_input_tokens?: number;
 }
