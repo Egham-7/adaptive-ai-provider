@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 0.6.5
+
+### Patch Changes
+
+- cd7570a: update zod and node types to 24
+
 ## 0.6.4
 
 ### Patch Changes
