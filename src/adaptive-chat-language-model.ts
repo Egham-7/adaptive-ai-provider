@@ -146,16 +146,8 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       convertToAdaptiveChatMessages({ prompt });
     warnings.push(...messageWarnings);
 
-    // Parse model ID to extract provider and model
-    const dashIndex = this.modelId.indexOf('-');
-    const provider =
-      dashIndex !== -1 ? this.modelId.substring(0, dashIndex) : '';
-    const model = dashIndex === -1 ? this.modelId.substring(dashIndex + 1) : '';
-
-    // Standardized settings
+    // Standardized settings for intelligent model selection
     const standardizedArgs = {
-      model,
-      provider,
       messages: messages as AdaptiveChatCompletionMessage[],
       max_tokens:
         typeof maxOutputTokens === 'number' ? maxOutputTokens : undefined,

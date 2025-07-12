@@ -2,8 +2,6 @@
  * Request payload for Adaptive chat completion API.
  */
 export interface AdaptiveChatCompletionRequest {
-  model: string;
-  provider: string;
   messages: AdaptiveChatCompletionMessage[];
   max_tokens?: number;
   temperature?: number;

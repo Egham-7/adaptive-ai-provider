@@ -11,17 +11,17 @@ import { AdaptiveChatLanguageModel } from './adaptive-chat-language-model';
 export type AdaptiveChatModelId = string;
 
 export interface AdaptiveProvider extends ProviderV2 {
-  (modelId?: AdaptiveChatModelId): LanguageModelV2;
+  (): LanguageModelV2;
 
   /**
    * Creates a model for text generation with adaptive provider selection.
    */
-  languageModel: (modelId?: AdaptiveChatModelId) => LanguageModelV2;
+  languageModel: () => LanguageModelV2;
 
   /**
    * Creates a chat model with adaptive provider selection.
    */
-  chat: (modelId?: AdaptiveChatModelId) => LanguageModelV2;
+  chat: () => LanguageModelV2;
 
   /**
    * Text embedding is not currently supported by the adaptive provider.
@@ -79,9 +79,8 @@ export function createAdaptive(
     ...options.headers,
   });
 
-  const DEFAULT_MODEL_ID = 'openai-gpt-4o';
-  const createChatModel = (modelId?: AdaptiveChatModelId) =>
-    new AdaptiveChatLanguageModel(modelId ?? DEFAULT_MODEL_ID, {
+  const createChatModel = () =>
+    new AdaptiveChatLanguageModel('', {
       provider: 'adaptive.chat',
       baseURL,
       headers: getHeaders,
@@ -89,14 +88,14 @@ export function createAdaptive(
       defaultProvider: options.defaultProvider,
     });
 
-  const provider = function (modelId?: AdaptiveChatModelId) {
+  const provider = function () {
     if (new.target) {
       throw new Error(
         'The Adaptive model function cannot be called with the new keyword.'
       );
     }
 
-    return createChatModel(modelId);
+    return createChatModel();
   };
 
   provider.languageModel = createChatModel;

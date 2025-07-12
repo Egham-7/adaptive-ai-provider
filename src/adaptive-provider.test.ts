@@ -10,7 +10,7 @@ describe('adaptiveProvider', () => {
     expect(typeof provider).toBe('function');
     expect(provider.languageModel).toBeInstanceOf(Function);
     expect(provider.chat).toBeInstanceOf(Function);
-    expect(() => provider('test-model')).not.toThrow();
+    expect(() => provider()).not.toThrow();
   });
 
   it('should create a chat model', () => {
@@ -18,9 +18,9 @@ describe('adaptiveProvider', () => {
       apiKey: 'test-key',
       baseURL: 'https://example.com',
     });
-    const model = provider.chat('test-model');
+    const model = provider.chat();
     expect(model).toBeDefined();
-    expect(model.modelId).toBe('test-model');
+    expect(model.modelId).toBe('');
     expect(model.provider).toBe('adaptive.chat');
   });
 
@@ -29,9 +29,9 @@ describe('adaptiveProvider', () => {
       apiKey: 'test-key',
       baseURL: 'https://example.com',
     });
-    const model = provider.languageModel('test-model');
+    const model = provider.languageModel();
     expect(model).toBeDefined();
-    expect(model.modelId).toBe('test-model');
+    expect(model.modelId).toBe('');
     expect(model.provider).toBe('adaptive.chat');
   });
 
