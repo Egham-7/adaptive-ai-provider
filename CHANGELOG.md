@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.0.0
+
+### Major Changes
+
+- 6fdedd6: remove ability to select provider and model manually
+
 ## 0.6.5
 
 ### Patch Changes
