@@ -578,8 +578,14 @@ describe('convertToAdaptiveChatMessages', () => {
             role: 'assistant',
             content: [
               { type: 'text', text: 'Let me think about this.' },
-              { type: 'reasoning', text: 'First, I need to consider the implications...' },
-              { type: 'text', text: 'Based on my reasoning, the answer is 42.' },
+              {
+                type: 'reasoning',
+                text: 'First, I need to consider the implications...',
+              },
+              {
+                type: 'text',
+                text: 'Based on my reasoning, the answer is 42.',
+              },
             ],
           },
         ],
@@ -588,12 +594,12 @@ describe('convertToAdaptiveChatMessages', () => {
       expect(messages).toEqual([
         {
           role: 'assistant',
-          content: 'Let me think about this.Based on my reasoning, the answer is 42.',
+          content:
+            'Let me think about this.Based on my reasoning, the answer is 42.',
           reasoning: 'First, I need to consider the implications...',
         },
       ]);
     });
-
 
     it('should handle file content in assistant messages', () => {
       const { messages } = convertToAdaptiveChatMessages({

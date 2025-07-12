@@ -41,10 +41,14 @@ const adaptiveChatResponseSchema = z.object({
           role: z.string().optional(),
           toolCalls: z.array(z.any()).optional(),
           reasoning: z.string().optional(),
-          generated_files: z.array(z.object({
-            mediaType: z.string(),
-            data: z.string(),
-          })).optional(),
+          generated_files: z
+            .array(
+              z.object({
+                mediaType: z.string(),
+                data: z.string(),
+              })
+            )
+            .optional(),
         })
         .optional(),
       finishReason: z.string().optional(),
@@ -76,10 +80,14 @@ const adaptiveChatChunkSchema = z.object({
         reasoning: z.string().optional(),
         role: z.string().optional(),
         toolCalls: z.array(z.any()).optional(),
-        generated_files: z.array(z.object({
-          mediaType: z.string(),
-          data: z.string(),
-        })).optional(),
+        generated_files: z
+          .array(
+            z.object({
+              mediaType: z.string(),
+              data: z.string(),
+            })
+          )
+          .optional(),
       }),
       finishReason: z.string().optional(),
       index: z.number(),
@@ -219,8 +227,10 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       content.push({ type: 'reasoning', text: choice.message.reasoning });
     }
 
-
-    if (choice.message?.generated_files && choice.message.generated_files.length > 0) {
+    if (
+      choice.message?.generated_files &&
+      choice.message.generated_files.length > 0
+    ) {
       for (const file of choice.message.generated_files) {
         content.push({
           type: 'file',
@@ -243,8 +253,13 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
     }
 
     // Extract usage information
-    const { prompt_tokens, completion_tokens, total_tokens, reasoning_tokens, cached_input_tokens } =
-      value.usage ?? {};
+    const {
+      prompt_tokens,
+      completion_tokens,
+      total_tokens,
+      reasoning_tokens,
+      cached_input_tokens,
+    } = value.usage ?? {};
 
     return {
       content,
@@ -346,8 +361,10 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
               state.usage.outputTokens =
                 value.usage.completion_tokens ?? undefined;
               state.usage.totalTokens = value.usage.total_tokens ?? undefined;
-              state.usage.reasoningTokens = value.usage.reasoning_tokens ?? undefined;
-              state.usage.cachedInputTokens = value.usage.cached_input_tokens ?? undefined;
+              state.usage.reasoningTokens =
+                value.usage.reasoning_tokens ?? undefined;
+              state.usage.cachedInputTokens =
+                value.usage.cached_input_tokens ?? undefined;
             }
 
             if (value.provider) {
@@ -383,8 +400,10 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
               });
             }
 
-
-            if (delta.generated_files != null && Array.isArray(delta.generated_files)) {
+            if (
+              delta.generated_files != null &&
+              Array.isArray(delta.generated_files)
+            ) {
               for (const file of delta.generated_files) {
                 controller.enqueue({
                   type: 'file',

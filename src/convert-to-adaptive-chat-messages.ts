@@ -125,7 +125,7 @@ export function convertToAdaptiveChatMessages({
           type: 'function';
           function: { name: string; arguments: string };
         }> = [];
-        
+
         for (const part of content) {
           switch (part.type) {
             case 'text': {
@@ -137,12 +137,17 @@ export function convertToAdaptiveChatMessages({
               break;
             }
             case 'file': {
-              const dataString = typeof part.data === 'string' 
-                ? part.data
-                : part.data instanceof URL
-                ? (() => { throw new Error('URL data not supported for generated files'); })()
-                : Buffer.from(part.data).toString('base64');
-              
+              const dataString =
+                typeof part.data === 'string'
+                  ? part.data
+                  : part.data instanceof URL
+                    ? (() => {
+                        throw new Error(
+                          'URL data not supported for generated files'
+                        );
+                      })()
+                    : Buffer.from(part.data).toString('base64');
+
               generatedFiles.push({
                 mediaType: part.mediaType,
                 data: dataString,
@@ -162,16 +167,17 @@ export function convertToAdaptiveChatMessages({
             }
           }
         }
-        
+
         const text = textParts.join('');
         const reasoning = reasoningParts.join('');
-        
+
         messages.push({
           role: 'assistant',
           content: text,
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
           reasoning: reasoning || undefined,
-          generated_files: generatedFiles.length > 0 ? generatedFiles : undefined,
+          generated_files:
+            generatedFiles.length > 0 ? generatedFiles : undefined,
         });
         break;
       }

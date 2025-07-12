@@ -34,26 +34,32 @@ describe('adaptiveChatLanguageModel', () => {
   it('should support V2 content types in responses', async () => {
     const mockResponse = {
       id: 'test-id',
-      choices: [{
-        index: 0,
-        message: {
-          content: 'Hello world',
-          reasoning: 'This is reasoning',
-          generated_files: [{
-            mediaType: 'image/png',
-            data: 'base64data'
-          }],
-          toolCalls: [{
-            id: 'call-1',
-            type: 'function',
-            function: {
-              name: 'test_tool',
-              arguments: '{"param": "value"}'
-            }
-          }]
+      choices: [
+        {
+          index: 0,
+          message: {
+            content: 'Hello world',
+            reasoning: 'This is reasoning',
+            generated_files: [
+              {
+                mediaType: 'image/png',
+                data: 'base64data',
+              },
+            ],
+            toolCalls: [
+              {
+                id: 'call-1',
+                type: 'function',
+                function: {
+                  name: 'test_tool',
+                  arguments: '{"param": "value"}',
+                },
+              },
+            ],
+          },
+          finishReason: 'stop',
         },
-        finishReason: 'stop'
-      }],
+      ],
       created: Date.now() / 1000,
       model: 'test-model',
       object: 'chat.completion',
@@ -62,9 +68,9 @@ describe('adaptiveChatLanguageModel', () => {
         completion_tokens: 20,
         total_tokens: 30,
         reasoning_tokens: 5,
-        cached_input_tokens: 2
+        cached_input_tokens: 2,
       },
-      provider: 'test-provider'
+      provider: 'test-provider',
     };
 
     const mockFetch = vi.fn().mockResolvedValue({
@@ -82,34 +88,37 @@ describe('adaptiveChatLanguageModel', () => {
       url: 'https://example.com',
       redirected: false,
       type: 'basic' as ResponseType,
-      clone: () => ({} as Response)
+      clone: () => ({}) as Response,
     });
 
     const model = new AdaptiveChatLanguageModel('', {
       provider: 'adaptive.chat',
       baseURL: 'https://example.com',
       headers: () => ({}),
-      fetch: mockFetch
+      fetch: mockFetch,
     });
 
     const result = await model.doGenerate({
-      prompt: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }]
+      prompt: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }],
     });
 
     expect(result.content).toHaveLength(4);
     expect(result.content[0]).toEqual({ type: 'text', text: 'Hello world' });
-    expect(result.content[1]).toEqual({ type: 'reasoning', text: 'This is reasoning' });
+    expect(result.content[1]).toEqual({
+      type: 'reasoning',
+      text: 'This is reasoning',
+    });
     expect(result.content[2]).toEqual({
       type: 'file',
       mediaType: 'image/png',
-      data: 'base64data'
+      data: 'base64data',
     });
     expect(result.content[3]).toEqual({
       type: 'tool-call',
       toolCallId: 'call-1',
       toolName: 'test_tool',
       args: '{"param": "value"}',
-      toolCallType: 'function'
+      toolCallType: 'function',
     });
 
     expect(result.usage).toEqual({
@@ -117,7 +126,7 @@ describe('adaptiveChatLanguageModel', () => {
       outputTokens: 20,
       totalTokens: 30,
       reasoningTokens: 5,
-      cachedInputTokens: 2
+      cachedInputTokens: 2,
     });
   });
 
@@ -127,7 +136,7 @@ describe('adaptiveChatLanguageModel', () => {
       baseURL: 'https://example.com',
       headers: () => ({}),
     });
-    
+
     expect(model.supportedUrls).toEqual({
       'application/pdf': [/^https:\/\/.*$/],
     });
