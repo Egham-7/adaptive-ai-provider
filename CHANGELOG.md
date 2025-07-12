@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 0.6.4
+
+### Patch Changes
+
+- fe23dc1: fix base url to point to prod
+
 ## 0.6.3
 
 ### Patch Changes
