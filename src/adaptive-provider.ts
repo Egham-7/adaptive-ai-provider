@@ -67,7 +67,7 @@ export function createAdaptive(
 ): AdaptiveProvider {
   const baseURL =
     withoutTrailingSlash(options.baseURL) ??
-    'https://backend-dev.mangoplant-a7a21605.swedencentral.azurecontainerapps.io/v1';
+    'https://backend.mangoplant-a7a21605.swedencentral.azurecontainerapps.io/v1';
 
   const getHeaders = () => ({
     Authorization: `Bearer ${loadApiKey({
