@@ -2,6 +2,7 @@
   "name": "@adaptive-llm/adaptive-ai-provider",
   "author": "Adaptive",
   "version": "0.6.2",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Egham-7/adaptive-ai-provider.git"
