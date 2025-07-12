@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.1.0
+
+### Minor Changes
+
+- 68d11c9: support vercel ai sdk provider v2 types
+
 ## 1.0.0
 
 ### Major Changes
