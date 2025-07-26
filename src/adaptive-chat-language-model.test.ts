@@ -39,14 +39,14 @@ describe('adaptiveChatLanguageModel', () => {
           index: 0,
           message: {
             content: 'Hello world',
-            reasoning: 'This is reasoning',
+            reasoning_content: 'This is reasoning',
             generated_files: [
               {
-                mediaType: 'image/png',
+                media_type: 'image/png',
                 data: 'base64data',
               },
             ],
-            toolCalls: [
+            tool_calls: [
               {
                 id: 'call-1',
                 type: 'function',
@@ -112,7 +112,7 @@ describe('adaptiveChatLanguageModel', () => {
     });
     expect(result.content[2]).toEqual({
       type: 'file',
-      media_type: 'image/png',
+      mediaType: 'image/png',
       data: 'base64data',
     });
     expect(result.content[3]).toEqual({

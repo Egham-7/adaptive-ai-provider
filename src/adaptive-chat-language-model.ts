@@ -84,7 +84,7 @@ const adaptiveChatChunkSchema = z.object({
         generated_files: z
           .array(
             z.object({
-              media_type: z.string(),
+              mediaType: z.string(),
               data: z.string(),
             })
           )
@@ -248,7 +248,7 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       for (const file of choice.message.generated_files) {
         content.push({
           type: 'file',
-          media_type: file.media_type,
+          mediaType: file.media_type,
           data: file.data,
         });
       }
@@ -423,7 +423,7 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
               for (const file of delta.generated_files) {
                 controller.enqueue({
                   type: 'file',
-                  media_type: file.media_type,
+                  mediaType: file.mediaType,
                   data: file.data,
                 });
               }
