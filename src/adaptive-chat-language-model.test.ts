@@ -57,7 +57,7 @@ describe('adaptiveChatLanguageModel', () => {
               },
             ],
           },
-          finishReason: 'stop',
+          finish_reason: 'stop',
         },
       ],
       created: Date.now() / 1000,
@@ -101,6 +101,8 @@ describe('adaptiveChatLanguageModel', () => {
     const result = await model.doGenerate({
       prompt: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }],
     });
+
+    console.log('Generated result:', result);
 
     expect(result.content).toHaveLength(4);
     expect(result.content[0]).toEqual({ type: 'text', text: 'Hello world' });

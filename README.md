@@ -41,7 +41,7 @@ content.forEach((item) => {
   switch (item.type) {
     case 'text': console.log(item.text); break;
     case 'reasoning': console.log(item.text); break;
-    case 'file': console.log(item.mediaType, item.data); break;
+    case 'file': console.log(item.media_type, item.data); break;
     case 'tool-call': console.log(item.toolName, item.args); break;
   }
 });
@@ -110,7 +110,7 @@ const { text } = await generateText({
     role: 'user',
     content: [
       { type: 'text', text: 'Analyze this image' },
-      { type: 'file', data: 'data:image/jpeg;base64,...', mediaType: 'image/jpeg' },
+      { type: 'file', data: 'data:image/jpeg;base64,...', media_type: 'image/jpeg' },
     ],
   }],
 });

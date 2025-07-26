@@ -56,7 +56,6 @@ export interface AdaptiveProviderSettings {
   /**
    * Default provider to use for comparisons and fallbacks.
    */
-  defaultProvider?: string;
 }
 
 /**
@@ -85,7 +84,6 @@ export function createAdaptive(
       baseURL,
       headers: getHeaders,
       fetch: options.fetch,
-      defaultProvider: options.defaultProvider,
     });
 
   const provider = function () {

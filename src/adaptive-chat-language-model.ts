@@ -15,6 +15,7 @@ import {
 import { z } from 'zod';
 import { adaptiveProviderOptions } from './adaptive-chat-options';
 import { adaptiveFailedResponseHandler } from './adaptive-error';
+import { prepareTools } from './adaptive-prepare-tools';
 import type {
   AdaptiveChatCompletionMessage,
   AdaptiveChatCompletionRequest,
@@ -39,8 +40,8 @@ const adaptiveChatResponseSchema = z.object({
         .object({
           content: z.string().optional(),
           role: z.string().optional(),
-          toolCalls: z.array(z.any()).optional(),
-          reasoning: z.string().optional(),
+          tool_calls: z.array(z.any()).optional(),
+          reasoning_content: z.string().optional(),
           generated_files: z
             .array(
               z.object({
@@ -51,7 +52,7 @@ const adaptiveChatResponseSchema = z.object({
             .optional(),
         })
         .optional(),
-      finishReason: z.string().optional(),
+      finish_reason: z.string().optional(),
       index: z.number(),
     })
   ),
@@ -67,7 +68,7 @@ const adaptiveChatResponseSchema = z.object({
       cached_input_tokens: z.number().optional(),
     })
     .optional(),
-  systemFingerprint: z.string().optional(),
+  system_fingerprint: z.string().optional(),
   provider: z.string(),
 });
 
@@ -77,9 +78,9 @@ const adaptiveChatChunkSchema = z.object({
     z.object({
       delta: z.object({
         content: z.string().optional(),
-        reasoning: z.string().optional(),
+        reasoning_content: z.string().optional(),
         role: z.string().optional(),
-        toolCalls: z.array(z.any()).optional(),
+        tool_calls: z.array(z.any()).optional(),
         generated_files: z
           .array(
             z.object({
@@ -89,7 +90,7 @@ const adaptiveChatChunkSchema = z.object({
           )
           .optional(),
       }),
-      finishReason: z.string().optional(),
+      finish_reason: z.string().optional(),
       index: z.number(),
     })
   ),
@@ -150,18 +151,23 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
     if (responseFormat != null) {
       warnings.push({ type: 'unsupported-setting', setting: 'responseFormat' });
     }
-    if (tools != null) {
-      warnings.push({ type: 'unsupported-setting', setting: 'tools' });
-    }
-    if (toolChoice != null) {
-      warnings.push({ type: 'unsupported-setting', setting: 'toolChoice' });
-    }
+
     if (seed != null) {
       warnings.push({ type: 'unsupported-setting', setting: 'seed' });
     }
     // Parse provider options with zod schema (flat, not nested)
     const result = adaptiveProviderOptions.safeParse(providerOptions ?? {});
     const adaptiveOptions = result.success ? result.data : {};
+
+    const {
+      tools: adaptiveTools,
+      toolChoice: adaptiveToolChoice,
+      toolWarnings,
+    } = prepareTools({
+      tools,
+      toolChoice,
+    });
+    warnings.push(...toolWarnings);
 
     // Convert messages
     const { messages, warnings: messageWarnings } =
@@ -179,14 +185,19 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       presence_penalty: presencePenalty,
       frequency_penalty: frequencyPenalty,
       user: adaptiveOptions.user,
+      tools: adaptiveTools,
+      tool_choice: adaptiveToolChoice,
     };
 
     // logit_bias
-    const logitBias = adaptiveOptions.logitBias;
+    const logitBias = adaptiveOptions.logit_bias;
 
     const args: AdaptiveChatCompletionRequest = {
       ...standardizedArgs,
       ...(logitBias ? { logit_bias: logitBias } : {}),
+      ...(adaptiveOptions.semantic_cache
+        ? { semantic_cache: adaptiveOptions.semantic_cache }
+        : {}),
     };
 
     return {
@@ -223,8 +234,11 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       content.push({ type: 'text', text: choice.message.content });
     }
 
-    if (choice.message?.reasoning) {
-      content.push({ type: 'reasoning', text: choice.message.reasoning });
+    if (choice.message?.reasoning_content) {
+      content.push({
+        type: 'reasoning',
+        text: choice.message.reasoning_content,
+      });
     }
 
     if (
@@ -240,8 +254,8 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       }
     }
 
-    if (choice.message?.toolCalls && choice.message.toolCalls.length > 0) {
-      for (const toolCall of choice.message.toolCalls) {
+    if (choice.message?.tool_calls && choice.message.tool_calls.length > 0) {
+      for (const toolCall of choice.message.tool_calls) {
         content.push({
           type: 'tool-call',
           toolCallId: toolCall.id || '',
@@ -263,8 +277,8 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
 
     return {
       content,
-      finishReason: choice.finishReason
-        ? mapAdaptiveFinishReason(choice.finishReason)
+      finishReason: choice.finish_reason
+        ? mapAdaptiveFinishReason(choice.finish_reason)
         : 'stop',
       usage: value.usage
         ? {
@@ -372,8 +386,10 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
             }
 
             const choice = value.choices[0];
-            if (choice?.finishReason != null) {
-              state.finishReason = mapAdaptiveFinishReason(choice.finishReason);
+            if (choice?.finish_reason != null) {
+              state.finishReason = mapAdaptiveFinishReason(
+                choice.finish_reason
+              );
             }
 
             if (!choice?.delta) {
@@ -393,10 +409,10 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
               });
             }
 
-            if (delta.reasoning != null) {
+            if (delta.reasoning_content != null) {
               controller.enqueue({
                 type: 'reasoning',
-                text: delta.reasoning,
+                text: delta.reasoning_content,
               });
             }
 
@@ -413,8 +429,8 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
               }
             }
 
-            if (delta.toolCalls != null && Array.isArray(delta.toolCalls)) {
-              for (const toolCall of delta.toolCalls) {
+            if (delta.tool_calls != null && Array.isArray(delta.tool_calls)) {
+              for (const toolCall of delta.tool_calls) {
                 if (toolCall.type !== 'function') continue;
                 controller.enqueue({
                   type: 'tool-call',

@@ -13,7 +13,11 @@ export interface AdaptiveChatCompletionRequest {
   frequency_penalty?: number;
   logit_bias?: Record<string, number>;
   user?: string;
-  costBias?: number;
+  cost_bias?: number;
+  semantic_cache?: {
+    enabled?: boolean;
+    semantic_threshold?: number;
+  };
   /**
    * Optional stream options for streaming requests.
    */
@@ -66,9 +70,9 @@ export interface AdaptiveChatCompletionAssistantMessage {
   role: 'assistant';
   content?: string | null;
   tool_calls?: Array<AdaptiveChatCompletionMessageToolCall>;
-  reasoning?: string;
+  reasoning_content?: string;
   generated_files?: Array<{
-    mediaType: string;
+    media_type: string;
     data: string;
   }>;
 }
