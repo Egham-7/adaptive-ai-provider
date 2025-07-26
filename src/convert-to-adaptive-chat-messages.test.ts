@@ -308,7 +308,9 @@ describe('convertToAdaptiveChatMessages', () => {
             },
           ],
         })
-      ).toThrow("'file part media type text/plain' functionality not supported.");
+      ).toThrow(
+        "'file part media type text/plain' functionality not supported."
+      );
     });
 
     it('should throw error for PDF file parts with URLs', () => {
@@ -408,7 +410,6 @@ describe('convertToAdaptiveChatMessages', () => {
       ]);
     });
 
-
     it('should handle assistant text and tool calls together', () => {
       const { messages } = convertToAdaptiveChatMessages({
         prompt: [
@@ -444,7 +445,6 @@ describe('convertToAdaptiveChatMessages', () => {
         },
       ]);
     });
-
 
     it('should handle completely empty tool results', () => {
       const { messages } = convertToAdaptiveChatMessages({
