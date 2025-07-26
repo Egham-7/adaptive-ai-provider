@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.1
+
+### Patch Changes
+
+- 1d7745e: ensure messages conform to openai spec
+
 ## 1.2.0
 
 ### Minor Changes
