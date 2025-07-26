@@ -596,7 +596,9 @@ describe('convertToAdaptiveChatMessages', () => {
           role: 'assistant',
           content:
             'Let me think about this.Based on my reasoning, the answer is 42.',
-          reasoning: 'First, I need to consider the implications...',
+          reasoning_content: 'First, I need to consider the implications...',
+          tool_calls: undefined,
+          generated_files: undefined,
         },
       ]);
     });
@@ -629,14 +631,16 @@ describe('convertToAdaptiveChatMessages', () => {
           content: 'I generated this image:',
           generated_files: [
             {
-              mediaType: 'image/png',
+              media_type: 'image/png',
               data: 'iVBORw0KGgoAAAANS',
             },
             {
-              mediaType: 'audio/wav',
+              media_type: 'audio/wav',
               data: 'AQIDBA==', // base64 of [1,2,3,4]
             },
           ],
+          reasoning_content: undefined,
+          tool_calls: undefined,
         },
       ]);
     });
@@ -669,10 +673,10 @@ describe('convertToAdaptiveChatMessages', () => {
         {
           role: 'assistant',
           content: 'Here is my complete response:',
-          reasoning: 'I analyzed the data carefully...',
+          reasoning_content: 'I analyzed the data carefully...',
           generated_files: [
             {
-              mediaType: 'image/jpeg',
+              media_type: 'image/jpeg',
               data: '/9j/4AAQSkZJRgABA',
             },
           ],

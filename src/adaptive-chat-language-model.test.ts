@@ -112,7 +112,7 @@ describe('adaptiveChatLanguageModel', () => {
     });
     expect(result.content[2]).toEqual({
       type: 'file',
-      mediaType: 'image/png',
+      media_type: 'image/png',
       data: 'base64data',
     });
     expect(result.content[3]).toEqual({
