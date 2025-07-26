@@ -3,6 +3,7 @@ import type {
   LanguageModelV2CallWarning,
   LanguageModelV2Prompt,
 } from '@ai-sdk/provider';
+import { UnsupportedFunctionalityError } from '@ai-sdk/provider';
 import { convertToBase64 } from '@ai-sdk/provider-utils';
 import type { AdaptiveChatCompletionMessage } from './adaptive-types';
 
@@ -11,7 +12,7 @@ export function convertToAdaptiveChatMessages({
   systemMessageMode = 'system',
 }: {
   prompt: LanguageModelV2Prompt;
-  systemMessageMode?: 'system' | 'remove';
+  systemMessageMode?: 'system' | 'developer' | 'remove';
 }): {
   messages: AdaptiveChatCompletionMessage[];
   warnings: Array<LanguageModelV2CallWarning>;
@@ -25,6 +26,10 @@ export function convertToAdaptiveChatMessages({
         switch (systemMessageMode) {
           case 'system': {
             messages.push({ role: 'system', content });
+            break;
+          }
+          case 'developer': {
+            messages.push({ role: 'developer', content });
             break;
           }
           case 'remove': {
@@ -78,9 +83,9 @@ export function convertToAdaptiveChatMessages({
                     part.mediaType === 'audio/mpeg')
                 ) {
                   if (part.data instanceof URL) {
-                    throw new TypeError(
-                      'Audio file parts with URLs are not supported'
-                    );
+                    throw new UnsupportedFunctionalityError({
+                      functionality: 'audio file parts with URLs',
+                    });
                   }
                   return {
                     type: 'input_audio',
@@ -92,9 +97,9 @@ export function convertToAdaptiveChatMessages({
                 }
                 if (part.mediaType && part.mediaType === 'application/pdf') {
                   if (part.data instanceof URL) {
-                    throw new TypeError(
-                      'PDF file parts with URLs are not supported'
-                    );
+                    throw new UnsupportedFunctionalityError({
+                      functionality: 'PDF file parts with URLs',
+                    });
                   }
                   return {
                     type: 'file',
@@ -104,9 +109,9 @@ export function convertToAdaptiveChatMessages({
                     },
                   };
                 }
-                throw new Error(
-                  `file part media type ${part.mediaType} is not supported`
-                );
+                throw new UnsupportedFunctionalityError({
+                  functionality: `file part media type ${part.mediaType}`,
+                });
               }
               default: {
                 throw new Error(`Unsupported content part type`);
@@ -171,50 +176,39 @@ export function convertToAdaptiveChatMessages({
         const text = textParts.join('');
         const reasoning = reasoningParts.join('');
 
-        messages.push({
+        const message: AdaptiveChatCompletionMessage = {
           role: 'assistant',
           content: text,
-          tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
-          reasoning_content: reasoning || undefined,
-          generated_files:
-            generatedFiles.length > 0 ? generatedFiles : undefined,
-        });
+          ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
+          ...(reasoning && { reasoning_content: reasoning }),
+          ...(generatedFiles.length > 0 && { generated_files: generatedFiles }),
+        };
+
+        messages.push(message);
         break;
       }
       case 'tool': {
         for (const toolResponse of content) {
           const output = toolResponse.content;
-          let contentValue: string;
 
-          if (output) {
-            contentValue = output
-              .map((item) =>
-                item.type === 'text' ? item.text : JSON.stringify(item.data)
-              )
-              .join('');
-          } else if (toolResponse.result !== undefined) {
-            // Handle legacy tool results using result field
-            if (typeof toolResponse.result === 'string') {
-              contentValue = toolResponse.result;
-            } else if (Array.isArray(toolResponse.result)) {
-              // Handle array of tool result items (similar to content format)
-              contentValue = toolResponse.result
+          const contentValue = (() => {
+            if (output && Array.isArray(output)) {
+              return output
                 .map((item) =>
                   item.type === 'text' ? item.text : JSON.stringify(item.data)
                 )
                 .join('');
-            } else {
-              contentValue = JSON.stringify(toolResponse.result);
             }
-          } else {
-            continue;
-          }
+            return '';
+          })();
 
-          messages.push({
-            role: 'tool',
-            tool_call_id: toolResponse.toolCallId,
-            content: contentValue,
-          });
+          if (contentValue) {
+            messages.push({
+              role: 'tool',
+              tool_call_id: toolResponse.toolCallId,
+              content: contentValue,
+            });
+          }
         }
         break;
       }

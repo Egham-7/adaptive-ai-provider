@@ -26,6 +26,11 @@ export interface AdaptiveChatCompletionRequest {
   };
 }
 
+export interface AdaptiveChatCompletionDeveloperMessage {
+  role: 'developer';
+  content: string;
+}
+
 /**
  * All possible message types for Adaptive chat completion.
  */
@@ -33,7 +38,8 @@ export type AdaptiveChatCompletionMessage =
   | AdaptiveChatCompletionSystemMessage
   | AdaptiveChatCompletionUserMessage
   | AdaptiveChatCompletionAssistantMessage
-  | AdaptiveChatCompletionToolMessage;
+  | AdaptiveChatCompletionToolMessage
+  | AdaptiveChatCompletionDeveloperMessage;
 
 /**
  * System message for Adaptive chat completion.

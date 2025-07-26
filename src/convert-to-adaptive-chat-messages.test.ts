@@ -308,7 +308,7 @@ describe('convertToAdaptiveChatMessages', () => {
             },
           ],
         })
-      ).toThrow('file part media type text/plain is not supported');
+      ).toThrow("'file part media type text/plain' functionality not supported.");
     });
 
     it('should throw error for PDF file parts with URLs', () => {
@@ -327,7 +327,7 @@ describe('convertToAdaptiveChatMessages', () => {
             },
           ],
         })
-      ).toThrow('PDF file parts with URLs are not supported');
+      ).toThrow("'PDF file parts with URLs' functionality not supported.");
     });
 
     it('should throw error for audio file parts with URLs', () => {
@@ -346,7 +346,7 @@ describe('convertToAdaptiveChatMessages', () => {
             },
           ],
         })
-      ).toThrow('Audio file parts with URLs are not supported');
+      ).toThrow("'audio file parts with URLs' functionality not supported.");
     });
   });
 
@@ -408,56 +408,6 @@ describe('convertToAdaptiveChatMessages', () => {
       ]);
     });
 
-    it('should handle different tool output types', () => {
-      const { messages } = convertToAdaptiveChatMessages({
-        prompt: [
-          {
-            role: 'tool',
-            content: [
-              {
-                type: 'tool-result',
-                toolCallId: 'text-tool',
-                toolName: 'text-tool',
-                result: [
-                  {
-                    type: 'text',
-                    text: 'Hello world',
-                  },
-                ],
-              },
-              {
-                type: 'tool-result',
-                toolCallId: 'mixed-tool',
-                toolName: 'mixed-tool',
-                result: [
-                  {
-                    type: 'text',
-                    text: 'text part',
-                  },
-                  {
-                    type: 'image',
-                    data: { foo: 'bar' },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      });
-
-      expect(messages).toEqual([
-        {
-          role: 'tool',
-          content: 'Hello world',
-          tool_call_id: 'text-tool',
-        },
-        {
-          role: 'tool',
-          content: 'text part{"foo":"bar"}',
-          tool_call_id: 'mixed-tool',
-        },
-      ]);
-    });
 
     it('should handle assistant text and tool calls together', () => {
       const { messages } = convertToAdaptiveChatMessages({
@@ -495,58 +445,6 @@ describe('convertToAdaptiveChatMessages', () => {
       ]);
     });
 
-    it('should handle tool results without content', () => {
-      const { messages } = convertToAdaptiveChatMessages({
-        prompt: [
-          {
-            role: 'tool',
-            content: [
-              {
-                type: 'tool-result',
-                toolCallId: 'empty-tool',
-                toolName: 'empty-tool',
-                result: 'some result',
-                content: undefined,
-              },
-            ],
-          },
-        ],
-      });
-
-      expect(messages).toEqual([
-        {
-          role: 'tool',
-          content: 'some result',
-          tool_call_id: 'empty-tool',
-        },
-      ]);
-    });
-
-    it('should handle legacy tool results using result field only', () => {
-      const { messages } = convertToAdaptiveChatMessages({
-        prompt: [
-          {
-            role: 'tool',
-            content: [
-              {
-                type: 'tool-result',
-                toolCallId: 'legacy-tool',
-                toolName: 'legacy-tool',
-                result: { status: 'success', data: 'legacy result' },
-              },
-            ],
-          },
-        ],
-      });
-
-      expect(messages).toEqual([
-        {
-          role: 'tool',
-          content: '{"status":"success","data":"legacy result"}',
-          tool_call_id: 'legacy-tool',
-        },
-      ]);
-    });
 
     it('should handle completely empty tool results', () => {
       const { messages } = convertToAdaptiveChatMessages({
