@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.0
+
+### Minor Changes
+
+- 0d28f84: Allow tool registering for adaptive requests
+
 ## 1.1.0
 
 ### Minor Changes
