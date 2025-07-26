@@ -102,8 +102,6 @@ describe('adaptiveChatLanguageModel', () => {
       prompt: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }],
     });
 
-    console.log('Generated result:', result);
-
     expect(result.content).toHaveLength(4);
     expect(result.content[0]).toEqual({ type: 'text', text: 'Hello world' });
     expect(result.content[1]).toEqual({

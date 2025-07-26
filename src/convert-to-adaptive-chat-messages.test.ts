@@ -631,11 +631,11 @@ describe('convertToAdaptiveChatMessages', () => {
           content: 'I generated this image:',
           generated_files: [
             {
-              mediaType: 'image/png',
+              media_type: 'image/png',
               data: 'iVBORw0KGgoAAAANS',
             },
             {
-              mediaType: 'audio/wav',
+              media_type: 'audio/wav',
               data: 'AQIDBA==', // base64 of [1,2,3,4]
             },
           ],
@@ -676,7 +676,7 @@ describe('convertToAdaptiveChatMessages', () => {
           reasoning_content: 'I analyzed the data carefully...',
           generated_files: [
             {
-              mediaType: 'image/jpeg',
+              media_type: 'image/jpeg',
               data: '/9j/4AAQSkZJRgABA',
             },
           ],

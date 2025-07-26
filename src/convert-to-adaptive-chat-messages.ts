@@ -119,7 +119,7 @@ export function convertToAdaptiveChatMessages({
       case 'assistant': {
         const textParts: string[] = [];
         const reasoningParts: string[] = [];
-        const generatedFiles: Array<{ mediaType: string; data: string }> = [];
+        const generatedFiles: Array<{ media_type: string; data: string }> = [];
         const toolCalls: Array<{
           id: string;
           type: 'function';
@@ -149,7 +149,7 @@ export function convertToAdaptiveChatMessages({
                     : Buffer.from(part.data).toString('base64');
 
               generatedFiles.push({
-                mediaType: part.mediaType,
+                media_type: part.mediaType,
                 data: dataString,
               });
               break;
