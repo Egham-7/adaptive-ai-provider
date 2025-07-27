@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.2
+
+### Patch Changes
+
+- d52903a: fix build
+
 ## 1.2.1
 
 ### Patch Changes
