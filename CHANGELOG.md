@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.3
+
+### Patch Changes
+
+- 949aea5: update deps
+
 ## 1.2.2
 
 ### Patch Changes
