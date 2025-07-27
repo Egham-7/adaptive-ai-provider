@@ -260,8 +260,7 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
           type: 'tool-call',
           toolCallId: toolCall.id || '',
           toolName: toolCall.function?.name || '',
-          args: toolCall.function?.arguments || '{}',
-          toolCallType: 'function',
+          input: toolCall.function?.arguments || '{}',
         });
       }
     }
@@ -400,19 +399,21 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
 
             if (delta.content != null) {
               if (!state.isActiveText) {
-                controller.enqueue({ type: 'text', text: '' });
+                controller.enqueue({ type: 'text-start', id: 'text-1' });
                 state.isActiveText = true;
               }
               controller.enqueue({
-                type: 'text',
-                text: delta.content,
+                type: 'text-delta',
+                id: 'text-1',
+                delta: delta.content,
               });
             }
 
             if (delta.reasoning_content != null) {
               controller.enqueue({
-                type: 'reasoning',
-                text: delta.reasoning_content,
+                type: 'reasoning-delta',
+                id: 'reasoning-1',
+                delta: delta.reasoning_content,
               });
             }
 
@@ -436,8 +437,7 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
                   type: 'tool-call',
                   toolCallId: toolCall.id || '',
                   toolName: toolCall.function?.name || '',
-                  args: toolCall.function?.arguments || '{}',
-                  toolCallType: 'function',
+                  input: toolCall.function?.arguments || '{}',
                 });
               }
             }

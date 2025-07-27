@@ -2,10 +2,25 @@
 import type {
   LanguageModelV2CallWarning,
   LanguageModelV2Prompt,
+  LanguageModelV2ToolResultOutput,
 } from '@ai-sdk/provider';
 import { UnsupportedFunctionalityError } from '@ai-sdk/provider';
 import { convertToBase64 } from '@ai-sdk/provider-utils';
 import type { AdaptiveChatCompletionMessage } from './adaptive-types';
+
+function convertToolOutput(output: LanguageModelV2ToolResultOutput): string {
+  switch (output.type) {
+    case 'text':
+    case 'error-text':
+      return output.value;
+    case 'content':
+    case 'json':
+    case 'error-json':
+      return JSON.stringify(output.value);
+    default:
+      return '';
+  }
+}
 
 export function convertToAdaptiveChatMessages({
   prompt,
@@ -165,7 +180,7 @@ export function convertToAdaptiveChatMessages({
                 type: 'function',
                 function: {
                   name: part.toolName,
-                  arguments: JSON.stringify(part.args),
+                  arguments: JSON.stringify(part.input),
                 },
               });
               break;
@@ -189,19 +204,7 @@ export function convertToAdaptiveChatMessages({
       }
       case 'tool': {
         for (const toolResponse of content) {
-          const output = toolResponse.content;
-
-          const contentValue = (() => {
-            if (output && Array.isArray(output)) {
-              return output
-                .map((item) =>
-                  item.type === 'text' ? item.text : JSON.stringify(item.data)
-                )
-                .join('');
-            }
-            return '';
-          })();
-
+          const contentValue = convertToolOutput(toolResponse.output);
           if (contentValue) {
             messages.push({
               role: 'tool',
@@ -218,5 +221,6 @@ export function convertToAdaptiveChatMessages({
       }
     }
   }
+
   return { messages, warnings };
 }

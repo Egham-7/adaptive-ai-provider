@@ -38,7 +38,7 @@ export function prepareTools({
     return { tools: undefined, toolChoice: undefined, toolWarnings };
   }
 
-  const adaptiveCompatTools: Array<{
+  const openaiCompatTools: Array<{
     type: 'function';
     function: {
       name: string;
@@ -51,19 +51,19 @@ export function prepareTools({
     if (tool.type === 'provider-defined') {
       toolWarnings.push({ type: 'unsupported-tool', tool });
     } else {
-      adaptiveCompatTools.push({
+      openaiCompatTools.push({
         type: 'function',
         function: {
           name: tool.name,
           description: tool.description,
-          parameters: tool.parameters ?? {},
+          parameters: tool.inputSchema,
         },
       });
     }
   }
 
   if (toolChoice == null) {
-    return { tools: adaptiveCompatTools, toolChoice: undefined, toolWarnings };
+    return { tools: openaiCompatTools, toolChoice: undefined, toolWarnings };
   }
 
   const type = toolChoice.type;
@@ -72,10 +72,10 @@ export function prepareTools({
     case 'auto':
     case 'none':
     case 'required':
-      return { tools: adaptiveCompatTools, toolChoice: type, toolWarnings };
+      return { tools: openaiCompatTools, toolChoice: type, toolWarnings };
     case 'tool':
       return {
-        tools: adaptiveCompatTools,
+        tools: openaiCompatTools,
         toolChoice: {
           type: 'function',
           function: { name: toolChoice.toolName },

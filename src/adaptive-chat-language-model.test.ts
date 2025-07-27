@@ -117,8 +117,7 @@ describe('adaptiveChatLanguageModel', () => {
       type: 'tool-call',
       toolCallId: 'call-1',
       toolName: 'test_tool',
-      args: '{"param": "value"}',
-      toolCallType: 'function',
+      input: '{"param": "value"}',
     });
 
     expect(result.usage).toEqual({
