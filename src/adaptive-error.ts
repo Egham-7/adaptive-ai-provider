@@ -12,7 +12,9 @@ export const adaptiveErrorDataSchema = z.object({
 
 export type AdaptiveErrorData = z.infer<typeof adaptiveErrorDataSchema>;
 
-export const adaptiveFailedResponseHandler = createJsonErrorResponseHandler({
+export const adaptiveFailedResponseHandler: ReturnType<
+  typeof createJsonErrorResponseHandler<AdaptiveErrorData>
+> = createJsonErrorResponseHandler({
   errorSchema: adaptiveErrorDataSchema,
   errorToMessage: (data: AdaptiveErrorData) => data.error.message,
-}) as any;
+});

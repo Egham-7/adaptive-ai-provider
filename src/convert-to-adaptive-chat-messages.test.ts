@@ -396,14 +396,11 @@ describe('convertToAdaptiveChatMessages', () => {
             },
           ],
         },
-        // NOTE: This tool result message should be included but there's a Vitest issue
-        // where tool case isn't being processed. The functionality works correctly
-        // in real usage (see websearch test) and with Bun's test runner.
-        // {
-        //   role: 'tool',
-        //   content: 'legacy result',
-        //   tool_call_id: 'quux',
-        // },
+        {
+          role: 'tool',
+          content: 'legacy result',
+          tool_call_id: 'quux',
+        },
       ]);
     });
 
