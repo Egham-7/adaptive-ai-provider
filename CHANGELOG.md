@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.4
+
+### Patch Changes
+
+- b2435db: fix: tool call results not being passed
+
 ## 1.2.3
 
 ### Patch Changes
