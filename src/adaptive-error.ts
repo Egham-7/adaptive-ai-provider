@@ -1,8 +1,4 @@
-import type { APICallError } from '@ai-sdk/provider';
-import {
-  createJsonErrorResponseHandler,
-  type ResponseHandler,
-} from '@ai-sdk/provider-utils';
+import { createJsonErrorResponseHandler } from '@ai-sdk/provider-utils';
 import { z } from 'zod';
 
 export const adaptiveErrorDataSchema = z.object({
@@ -16,8 +12,7 @@ export const adaptiveErrorDataSchema = z.object({
 
 export type AdaptiveErrorData = z.infer<typeof adaptiveErrorDataSchema>;
 
-export const adaptiveFailedResponseHandler: ResponseHandler<APICallError> =
-  createJsonErrorResponseHandler({
-    errorSchema: adaptiveErrorDataSchema,
-    errorToMessage: (data: AdaptiveErrorData) => data.error.message,
-  });
+export const adaptiveFailedResponseHandler = createJsonErrorResponseHandler({
+  errorSchema: adaptiveErrorDataSchema,
+  errorToMessage: (data: AdaptiveErrorData) => data.error.message,
+}) as any;
