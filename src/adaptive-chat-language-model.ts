@@ -107,7 +107,7 @@ const adaptiveChatChunkSchema = z.union([
       z.object({
         delta: z
           .object({
-            role: z.enum(['assistant']).nullish(),
+            role: z.enum(['assistant', '']).nullish(),
             content: z.string().nullish(),
             tool_calls: z
               .array(
