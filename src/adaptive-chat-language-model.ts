@@ -5,11 +5,14 @@ import type {
   LanguageModelV2FinishReason,
   LanguageModelV2Usage,
 } from '@ai-sdk/provider';
+import { InvalidResponseDataError } from '@ai-sdk/provider';
 import type { FetchFunction } from '@ai-sdk/provider-utils';
 import {
   combineHeaders,
   createEventSourceResponseHandler,
   createJsonResponseHandler,
+  generateId,
+  isParsableJson,
   postJsonToApi,
 } from '@ai-sdk/provider-utils';
 import { z } from 'zod';
@@ -266,7 +269,7 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
           type: 'tool-call',
           toolCallId: toolCall.id || '',
           toolName: toolCall.function?.name || '',
-          input: toolCall.function?.arguments || '{}',
+          input: toolCall.function?.arguments || '',
         });
       }
     }
@@ -334,6 +337,16 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       abortSignal: options.abortSignal,
       fetch: this.config.fetch,
     });
+
+    const toolCalls: Array<{
+      id: string;
+      type: 'function';
+      function: {
+        name: string;
+        arguments: string;
+      };
+      hasFinished: boolean;
+    }> = [];
 
     const state = {
       finishReason: 'unknown' as LanguageModelV2FinishReason,
@@ -412,12 +425,12 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
 
             if (delta.content != null) {
               if (!state.isActiveText) {
-                controller.enqueue({ type: 'text-start', id: 'text-1' });
+                controller.enqueue({ type: 'text-start', id: '0' });
                 state.isActiveText = true;
               }
               controller.enqueue({
                 type: 'text-delta',
-                id: 'text-1',
+                id: '0',
                 delta: delta.content,
               });
             }
@@ -443,27 +456,135 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
               }
             }
 
-            if (delta.tool_calls != null && Array.isArray(delta.tool_calls)) {
-              for (const toolCall of delta.tool_calls) {
-                if (toolCall.type !== 'function') continue;
+            if (delta.tool_calls != null) {
+              for (const toolCallDelta of delta.tool_calls) {
+                const index = toolCallDelta.index;
+
+                // Tool call start. OpenAI returns all information except the arguments in the first chunk.
+                if (toolCalls[index] == null) {
+                  if (toolCallDelta.type !== 'function') {
+                    throw new InvalidResponseDataError({
+                      data: toolCallDelta,
+                      message: `Expected 'function' type.`,
+                    });
+                  }
+
+                  if (toolCallDelta.id == null) {
+                    throw new InvalidResponseDataError({
+                      data: toolCallDelta,
+                      message: `Expected 'id' to be a string.`,
+                    });
+                  }
+
+                  if (toolCallDelta.function?.name == null) {
+                    throw new InvalidResponseDataError({
+                      data: toolCallDelta,
+                      message: `Expected 'function.name' to be a string.`,
+                    });
+                  }
+
+                  controller.enqueue({
+                    type: 'tool-input-start',
+                    id: toolCallDelta.id,
+                    toolName: toolCallDelta.function.name,
+                  });
+
+                  toolCalls[index] = {
+                    id: toolCallDelta.id,
+                    type: 'function',
+                    function: {
+                      name: toolCallDelta.function.name,
+                      arguments: toolCallDelta.function.arguments ?? '',
+                    },
+                    hasFinished: false,
+                  };
+
+                  const toolCall = toolCalls[index];
+
+                  if (
+                    toolCall.function?.name != null &&
+                    toolCall.function?.arguments != null
+                  ) {
+                    // send delta if the argument text has already started:
+                    if (toolCall.function.arguments.length > 0) {
+                      controller.enqueue({
+                        type: 'tool-input-delta',
+                        id: toolCall.id,
+                        delta: toolCall.function.arguments,
+                      });
+                    }
+
+                    // check if tool call is complete
+                    // (some providers send the full tool call in one chunk):
+                    if (isParsableJson(toolCall.function.arguments)) {
+                      controller.enqueue({
+                        type: 'tool-input-end',
+                        id: toolCall.id,
+                      });
+
+                      controller.enqueue({
+                        type: 'tool-call',
+                        toolCallId: toolCall.id ?? generateId(),
+                        toolName: toolCall.function.name,
+                        input: toolCall.function.arguments,
+                      });
+                      toolCall.hasFinished = true;
+                    }
+                  }
+
+                  continue;
+                }
+
+                // existing tool call, merge if not finished
+                const toolCall = toolCalls[index];
+
+                if (toolCall.hasFinished) {
+                  continue;
+                }
+
+                if (toolCallDelta.function?.arguments != null) {
+                  toolCall.function.arguments +=
+                    toolCallDelta.function?.arguments ?? '';
+                }
+
+                // send delta
                 controller.enqueue({
-                  type: 'tool-call',
-                  toolCallId: toolCall.id || '',
-                  toolName: toolCall.function?.name || '',
-                  input: toolCall.function?.arguments || '{}',
+                  type: 'tool-input-delta',
+                  id: toolCall.id,
+                  delta: toolCallDelta.function.arguments ?? '',
                 });
+
+                // check if tool call is complete
+                if (
+                  toolCall.function?.name != null &&
+                  toolCall.function?.arguments != null &&
+                  isParsableJson(toolCall.function.arguments)
+                ) {
+                  controller.enqueue({
+                    type: 'tool-input-end',
+                    id: toolCall.id,
+                  });
+
+                  controller.enqueue({
+                    type: 'tool-call',
+                    toolCallId: toolCall.id ?? generateId(),
+                    toolName: toolCall.function.name,
+                    input: toolCall.function.arguments,
+                  });
+                  toolCall.hasFinished = true;
+                }
               }
             }
           },
           flush(controller) {
+            if (state.isActiveText) {
+              controller.enqueue({ type: 'text-end', id: '0' });
+            }
+
             controller.enqueue({
               type: 'finish',
-              finishReason: state.finishReason ?? 'stop',
-              usage: state.usage ?? {
-                inputTokens: 0,
-                outputTokens: 0,
-                totalTokens: 0,
-              },
+              finishReason: state.finishReason,
+              usage: state.usage,
               providerMetadata: state.provider
                 ? {
                     adaptive: {
