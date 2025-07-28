@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.9
+
+### Patch Changes
+
+- 65aa506: fix: allow empty role in streaming response
+
 ## 1.2.8
 
 ### Patch Changes
