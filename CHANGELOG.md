@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.5
+
+### Patch Changes
+
+- 0490f66: handle streaming errors properlyh
+
 ## 1.2.4
 
 ### Patch Changes
