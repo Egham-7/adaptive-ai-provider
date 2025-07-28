@@ -14,7 +14,7 @@ import {
 } from '@ai-sdk/provider-utils';
 import { z } from 'zod';
 import { adaptiveProviderOptions } from './adaptive-chat-options';
-import { adaptiveFailedResponseHandler } from './adaptive-error';
+import { adaptiveErrorDataSchema, adaptiveFailedResponseHandler } from './adaptive-error';
 import { prepareTools } from './adaptive-prepare-tools';
 import type {
   AdaptiveChatCompletionMessage,
@@ -72,42 +72,45 @@ const adaptiveChatResponseSchema = z.object({
   provider: z.string(),
 });
 
-const adaptiveChatChunkSchema = z.object({
-  id: z.string(),
-  choices: z.array(
-    z.object({
-      delta: z.object({
-        content: z.string().optional(),
-        reasoning_content: z.string().optional(),
-        role: z.string().optional(),
-        tool_calls: z.array(z.any()).optional(),
-        generated_files: z
-          .array(
-            z.object({
-              media_type: z.string(),
-              data: z.string(),
-            })
-          )
-          .optional(),
-      }),
-      finish_reason: z.string().optional(),
-      index: z.number(),
-    })
-  ),
-  created: z.number(),
-  model: z.string(),
-  object: z.string(),
-  usage: z
-    .object({
-      completion_tokens: z.number(),
-      prompt_tokens: z.number(),
-      total_tokens: z.number(),
-      reasoning_tokens: z.number().optional(),
-      cached_input_tokens: z.number().optional(),
-    })
-    .optional(),
-  provider: z.string(),
-});
+const adaptiveChatChunkSchema = z.union([
+  z.object({
+    id: z.string(),
+    choices: z.array(
+      z.object({
+        delta: z.object({
+          content: z.string().optional(),
+          reasoning_content: z.string().optional(),
+          role: z.string().optional(),
+          tool_calls: z.array(z.any()).optional(),
+          generated_files: z
+            .array(
+              z.object({
+                media_type: z.string(),
+                data: z.string(),
+              })
+            )
+            .optional(),
+        }),
+        finish_reason: z.string().optional(),
+        index: z.number(),
+      })
+    ),
+    created: z.number(),
+    model: z.string(),
+    object: z.string(),
+    usage: z
+      .object({
+        completion_tokens: z.number(),
+        prompt_tokens: z.number(),
+        total_tokens: z.number(),
+        reasoning_tokens: z.number().optional(),
+        cached_input_tokens: z.number().optional(),
+      })
+      .optional(),
+    provider: z.string(),
+  }),
+  adaptiveErrorDataSchema,
+]);
 
 export class AdaptiveChatLanguageModel implements LanguageModelV2 {
   readonly specificationVersion = 'v2';
@@ -356,6 +359,13 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
             }
 
             const value = chunk.value;
+
+            // handle error chunks:
+            if ('error' in value) {
+              state.finishReason = 'error';
+              controller.enqueue({ type: 'error', error: value.error });
+              return;
+            }
 
             if (state.isFirstChunk) {
               state.isFirstChunk = false;
