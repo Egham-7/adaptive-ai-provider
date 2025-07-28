@@ -1,7 +1,7 @@
 {
   "name": "@adaptive-llm/adaptive-ai-provider",
   "author": "Adaptive",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "type": "module",
   "repository": {
     "type": "git",

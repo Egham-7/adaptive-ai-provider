@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.8
+
+### Patch Changes
+
+- 94f2472: allow empty role cuz some providers dont add it for some reason
+
 ## 1.2.7
 
 ### Patch Changes
