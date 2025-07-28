@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.11
+
+### Patch Changes
+
+- 0b7f8b0: fix: handle empty strings from adaptive api
+
 ## 1.2.10
 
 ### Patch Changes
