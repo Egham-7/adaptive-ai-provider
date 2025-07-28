@@ -39,7 +39,7 @@ const adaptiveChatResponseSchema = z.object({
   choices: z.array(
     z.object({
       message: z.object({
-        role: z.literal('assistant').nullish(),
+        role: z.enum(['assistant', '']).nullish(),
         content: z.string().nullish(),
         tool_calls: z
           .array(
