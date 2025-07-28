@@ -5,22 +5,16 @@ import type {
   LanguageModelV2FinishReason,
   LanguageModelV2Usage,
 } from '@ai-sdk/provider';
-import { InvalidResponseDataError } from '@ai-sdk/provider';
 import type { FetchFunction } from '@ai-sdk/provider-utils';
 import {
   combineHeaders,
   createEventSourceResponseHandler,
   createJsonResponseHandler,
-  generateId,
-  isParsableJson,
   postJsonToApi,
 } from '@ai-sdk/provider-utils';
 import { z } from 'zod';
 import { adaptiveProviderOptions } from './adaptive-chat-options';
-import {
-  adaptiveErrorDataSchema,
-  adaptiveFailedResponseHandler,
-} from './adaptive-error';
+import { adaptiveFailedResponseHandler } from './adaptive-error';
 import { prepareTools } from './adaptive-prepare-tools';
 import type {
   AdaptiveChatCompletionMessage,
@@ -39,32 +33,58 @@ interface AdaptiveChatConfig {
 }
 
 const adaptiveChatResponseSchema = z.object({
-  id: z.string(),
+  id: z.string().nullish(),
+  created: z.number().nullish(),
+  model: z.string().nullish(),
   choices: z.array(
     z.object({
-      message: z
+      message: z.object({
+        role: z.literal('assistant').nullish(),
+        content: z.string().nullish(),
+        tool_calls: z
+          .array(
+            z.object({
+              id: z.string().nullish(),
+              type: z.literal('function'),
+              function: z.object({
+                name: z.string(),
+                arguments: z.string(),
+              }),
+            })
+          )
+          .nullish(),
+        reasoning_content: z.string().optional(),
+        generated_files: z
+          .array(
+            z.object({
+              media_type: z.string(),
+              data: z.string(),
+            })
+          )
+          .optional(),
+      }),
+      index: z.number(),
+      logprobs: z
         .object({
-          content: z.string().optional(),
-          role: z.string().optional(),
-          tool_calls: z.array(z.any()).optional(),
-          reasoning_content: z.string().optional(),
-          generated_files: z
+          content: z
             .array(
               z.object({
-                media_type: z.string(),
-                data: z.string(),
+                token: z.string(),
+                logprob: z.number(),
+                top_logprobs: z.array(
+                  z.object({
+                    token: z.string(),
+                    logprob: z.number(),
+                  })
+                ),
               })
             )
-            .optional(),
+            .nullish(),
         })
-        .optional(),
-      finish_reason: z.string().optional(),
-      index: z.number(),
+        .nullish(),
+      finish_reason: z.string().nullish(),
     })
   ),
-  created: z.number(),
-  model: z.string(),
-  object: z.string(),
   usage: z
     .object({
       completion_tokens: z.number(),
@@ -80,30 +100,61 @@ const adaptiveChatResponseSchema = z.object({
 
 const adaptiveChatChunkSchema = z.union([
   z.object({
-    id: z.string(),
+    id: z.string().nullish(),
+    created: z.number().nullish(),
+    model: z.string().nullish(),
     choices: z.array(
       z.object({
-        delta: z.object({
-          content: z.string().optional(),
-          reasoning_content: z.string().optional(),
-          role: z.string().optional(),
-          tool_calls: z.array(z.any()).optional(),
-          generated_files: z
-            .array(
-              z.object({
-                media_type: z.string(),
-                data: z.string(),
-              })
-            )
-            .optional(),
-        }),
-        finish_reason: z.string().optional(),
+        delta: z
+          .object({
+            role: z.enum(['assistant']).nullish(),
+            content: z.string().nullish(),
+            tool_calls: z
+              .array(
+                z.object({
+                  index: z.number(),
+                  id: z.string().nullish(),
+                  type: z.literal('function').nullish(),
+                  function: z.object({
+                    name: z.string().nullish(),
+                    arguments: z.string().nullish(),
+                  }),
+                })
+              )
+              .nullish(),
+            reasoning_content: z.string().optional(),
+            generated_files: z
+              .array(
+                z.object({
+                  media_type: z.string(),
+                  data: z.string(),
+                })
+              )
+              .optional(),
+          })
+          .nullish(),
+        logprobs: z
+          .object({
+            content: z
+              .array(
+                z.object({
+                  token: z.string(),
+                  logprob: z.number(),
+                  top_logprobs: z.array(
+                    z.object({
+                      token: z.string(),
+                      logprob: z.number(),
+                    })
+                  ),
+                })
+              )
+              .nullish(),
+          })
+          .nullish(),
+        finish_reason: z.string().nullish(),
         index: z.number(),
       })
     ),
-    created: z.number(),
-    model: z.string(),
-    object: z.string(),
     usage: z
       .object({
         completion_tokens: z.number(),
@@ -115,7 +166,13 @@ const adaptiveChatChunkSchema = z.union([
       .optional(),
     provider: z.string(),
   }),
-  adaptiveErrorDataSchema,
+  z.object({
+    error: z.object({
+      message: z.string(),
+      type: z.string(),
+    }),
+    provider: z.string(),
+  }),
 ]);
 
 export class AdaptiveChatLanguageModel implements LanguageModelV2 {
@@ -269,7 +326,7 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
           type: 'tool-call',
           toolCallId: toolCall.id || '',
           toolName: toolCall.function?.name || '',
-          input: toolCall.function?.arguments || '',
+          input: toolCall.function?.arguments || '{}',
         });
       }
     }
@@ -306,9 +363,9 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
         : undefined,
       request: { body },
       response: {
-        id: value.id,
-        modelId: value.model,
-        timestamp: new Date(value.created * 1000),
+        id: value.id ?? '',
+        modelId: value.model ?? '',
+        timestamp: new Date((value.created ?? 0) * 1000),
         headers: responseHeaders,
         body: rawValue,
       },
@@ -338,16 +395,6 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       fetch: this.config.fetch,
     });
 
-    const toolCalls: Array<{
-      id: string;
-      type: 'function';
-      function: {
-        name: string;
-        arguments: string;
-      };
-      hasFinished: boolean;
-    }> = [];
-
     const state = {
       finishReason: 'unknown' as LanguageModelV2FinishReason,
       usage: {
@@ -376,10 +423,13 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
 
             const value = chunk.value;
 
-            // handle error chunks:
+            // Handle error responses
             if ('error' in value) {
               state.finishReason = 'error';
-              controller.enqueue({ type: 'error', error: value.error });
+              controller.enqueue({
+                type: 'error',
+                error: new Error(value.error.message),
+              });
               return;
             }
 
@@ -388,9 +438,9 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
               controller.enqueue({
                 type: 'response-metadata',
                 ...getResponseMetadata({
-                  id: value.id,
-                  model: value.model,
-                  created: value.created,
+                  id: value.id ?? '',
+                  model: value.model ?? '',
+                  created: value.created ?? 0,
                 }),
               });
             }
@@ -425,12 +475,12 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
 
             if (delta.content != null) {
               if (!state.isActiveText) {
-                controller.enqueue({ type: 'text-start', id: '0' });
+                controller.enqueue({ type: 'text-start', id: 'text-1' });
                 state.isActiveText = true;
               }
               controller.enqueue({
                 type: 'text-delta',
-                id: '0',
+                id: 'text-1',
                 delta: delta.content,
               });
             }
@@ -456,135 +506,27 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
               }
             }
 
-            if (delta.tool_calls != null) {
-              for (const toolCallDelta of delta.tool_calls) {
-                const index = toolCallDelta.index;
-
-                // Tool call start. OpenAI returns all information except the arguments in the first chunk.
-                if (toolCalls[index] == null) {
-                  if (toolCallDelta.type !== 'function') {
-                    throw new InvalidResponseDataError({
-                      data: toolCallDelta,
-                      message: `Expected 'function' type.`,
-                    });
-                  }
-
-                  if (toolCallDelta.id == null) {
-                    throw new InvalidResponseDataError({
-                      data: toolCallDelta,
-                      message: `Expected 'id' to be a string.`,
-                    });
-                  }
-
-                  if (toolCallDelta.function?.name == null) {
-                    throw new InvalidResponseDataError({
-                      data: toolCallDelta,
-                      message: `Expected 'function.name' to be a string.`,
-                    });
-                  }
-
-                  controller.enqueue({
-                    type: 'tool-input-start',
-                    id: toolCallDelta.id,
-                    toolName: toolCallDelta.function.name,
-                  });
-
-                  toolCalls[index] = {
-                    id: toolCallDelta.id,
-                    type: 'function',
-                    function: {
-                      name: toolCallDelta.function.name,
-                      arguments: toolCallDelta.function.arguments ?? '',
-                    },
-                    hasFinished: false,
-                  };
-
-                  const toolCall = toolCalls[index];
-
-                  if (
-                    toolCall.function?.name != null &&
-                    toolCall.function?.arguments != null
-                  ) {
-                    // send delta if the argument text has already started:
-                    if (toolCall.function.arguments.length > 0) {
-                      controller.enqueue({
-                        type: 'tool-input-delta',
-                        id: toolCall.id,
-                        delta: toolCall.function.arguments,
-                      });
-                    }
-
-                    // check if tool call is complete
-                    // (some providers send the full tool call in one chunk):
-                    if (isParsableJson(toolCall.function.arguments)) {
-                      controller.enqueue({
-                        type: 'tool-input-end',
-                        id: toolCall.id,
-                      });
-
-                      controller.enqueue({
-                        type: 'tool-call',
-                        toolCallId: toolCall.id ?? generateId(),
-                        toolName: toolCall.function.name,
-                        input: toolCall.function.arguments,
-                      });
-                      toolCall.hasFinished = true;
-                    }
-                  }
-
-                  continue;
-                }
-
-                // existing tool call, merge if not finished
-                const toolCall = toolCalls[index];
-
-                if (toolCall.hasFinished) {
-                  continue;
-                }
-
-                if (toolCallDelta.function?.arguments != null) {
-                  toolCall.function.arguments +=
-                    toolCallDelta.function?.arguments ?? '';
-                }
-
-                // send delta
+            if (delta.tool_calls != null && Array.isArray(delta.tool_calls)) {
+              for (const toolCall of delta.tool_calls) {
+                if (toolCall.type !== 'function') continue;
                 controller.enqueue({
-                  type: 'tool-input-delta',
-                  id: toolCall.id,
-                  delta: toolCallDelta.function.arguments ?? '',
+                  type: 'tool-call',
+                  toolCallId: toolCall.id || '',
+                  toolName: toolCall.function?.name || '',
+                  input: toolCall.function?.arguments || '{}',
                 });
-
-                // check if tool call is complete
-                if (
-                  toolCall.function?.name != null &&
-                  toolCall.function?.arguments != null &&
-                  isParsableJson(toolCall.function.arguments)
-                ) {
-                  controller.enqueue({
-                    type: 'tool-input-end',
-                    id: toolCall.id,
-                  });
-
-                  controller.enqueue({
-                    type: 'tool-call',
-                    toolCallId: toolCall.id ?? generateId(),
-                    toolName: toolCall.function.name,
-                    input: toolCall.function.arguments,
-                  });
-                  toolCall.hasFinished = true;
-                }
               }
             }
           },
           flush(controller) {
-            if (state.isActiveText) {
-              controller.enqueue({ type: 'text-end', id: '0' });
-            }
-
             controller.enqueue({
               type: 'finish',
-              finishReason: state.finishReason,
-              usage: state.usage,
+              finishReason: state.finishReason ?? 'stop',
+              usage: state.usage ?? {
+                inputTokens: 0,
+                outputTokens: 0,
+                totalTokens: 0,
+              },
               providerMetadata: state.provider
                 ? {
                     adaptive: {
