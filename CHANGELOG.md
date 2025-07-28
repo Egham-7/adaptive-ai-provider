@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.7
+
+### Patch Changes
+
+- ac5c3dc: fix: handle tool calls and make schema precise
+
 ## 1.2.6
 
 ### Patch Changes
