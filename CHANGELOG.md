@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.6
+
+### Patch Changes
+
+- 2d9dbba: feat: handle partial tool calls and conform better to openai spec
+
 ## 1.2.5
 
 ### Patch Changes
