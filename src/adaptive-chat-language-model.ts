@@ -14,7 +14,10 @@ import {
 } from '@ai-sdk/provider-utils';
 import { z } from 'zod';
 import { adaptiveProviderOptions } from './adaptive-chat-options';
-import { adaptiveErrorDataSchema, adaptiveFailedResponseHandler } from './adaptive-error';
+import {
+  adaptiveErrorDataSchema,
+  adaptiveFailedResponseHandler,
+} from './adaptive-error';
 import { prepareTools } from './adaptive-prepare-tools';
 import type {
   AdaptiveChatCompletionMessage,
