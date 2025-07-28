@@ -117,7 +117,9 @@ const adaptiveChatChunkSchema = z.union([
                 z.object({
                   index: z.number(),
                   id: z.string().nullish(),
-                  type: z.literal('function').nullish(),
+                  type: z
+                    .union([z.literal('function'), z.literal('')])
+                    .nullish(),
                   function: z.object({
                     name: z.string().nullish(),
                     arguments: z.string().nullish(),
@@ -525,7 +527,10 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
 
                 // Tool call start. Adaptive returns all information except the arguments in the first chunk.
                 if (toolCalls[index] == null) {
-                  if (toolCallDelta.type !== 'function') {
+                  if (
+                    toolCallDelta.type !== 'function' &&
+                    toolCallDelta.type !== ''
+                  ) {
                     throw new InvalidResponseDataError({
                       data: toolCallDelta,
                       message: `Expected 'function' type.`,
