@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.10
+
+### Patch Changes
+
+- 4ceece3: fix: handle partial tool calls finally
+
 ## 1.2.9
 
 ### Patch Changes
