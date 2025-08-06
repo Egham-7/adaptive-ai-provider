@@ -179,14 +179,16 @@ const adaptiveChatChunkSchema = z.union([
         cached_input_tokens: z.number().optional(),
       })
       .optional(),
-    provider: z.string(),
+    provider: z.string().optional(),
   }),
   z.object({
     error: z.object({
       message: z.string(),
       type: z.string(),
+      param: z.any().nullish(),
+      code: z.any().nullish(),
     }),
-    provider: z.string(),
+    provider: z.string().optional(),
   }),
 ]);
 
