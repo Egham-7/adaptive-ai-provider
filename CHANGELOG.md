@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.3.0
+
+### Minor Changes
+
+- 5f790b5: feat: allow configuration for protocol manager, semantic cache, and fallback
+
 ## 1.2.12
 
 ### Patch Changes
