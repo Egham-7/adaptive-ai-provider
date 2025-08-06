@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.3.1
+
+### Patch Changes
+
+- 2bd6147: fix: streaming chunk choices && proivder optional
+
 ## 1.3.0
 
 ### Minor Changes
