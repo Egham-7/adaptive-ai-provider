@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.2.12
+
+### Patch Changes
+
+- b23f7a5: feat: make schema more permissive for hf
+
 ## 1.2.11
 
 ### Patch Changes
