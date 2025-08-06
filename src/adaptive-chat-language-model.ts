@@ -39,55 +39,57 @@ const adaptiveChatResponseSchema = z.object({
   id: z.string().nullish(),
   created: z.number().nullish(),
   model: z.string().nullish(),
-  choices: z.array(
-    z.object({
-      message: z.object({
-        role: z.enum(['assistant', '']).nullish(),
-        content: z.string().nullish(),
-        tool_calls: z
-          .array(
-            z.object({
-              id: z.string().nullish(),
-              type: z.literal('function'),
-              function: z.object({
-                name: z.string(),
-                arguments: z.string(),
-              }),
-            })
-          )
-          .nullish(),
-        reasoning_content: z.string().optional(),
-        generated_files: z
-          .array(
-            z.object({
-              media_type: z.string(),
-              data: z.string(),
-            })
-          )
-          .optional(),
-      }),
-      index: z.number(),
-      logprobs: z
-        .object({
-          content: z
+  choices: z
+    .array(
+      z.object({
+        message: z.object({
+          role: z.enum(['assistant', '']).nullish(),
+          content: z.string().nullish(),
+          tool_calls: z
             .array(
               z.object({
-                token: z.string(),
-                logprob: z.number(),
-                top_logprobs: z.array(
-                  z.object({
-                    token: z.string(),
-                    logprob: z.number(),
-                  })
-                ),
+                id: z.string().nullish(),
+                type: z.literal('function'),
+                function: z.object({
+                  name: z.string(),
+                  arguments: z.string(),
+                }),
               })
             )
             .nullish(),
-        })
-        .nullish(),
-      finish_reason: z.string().nullish(),
-    })
-  ),
+          reasoning_content: z.string().optional(),
+          generated_files: z
+            .array(
+              z.object({
+                media_type: z.string(),
+                data: z.string(),
+              })
+            )
+            .optional(),
+        }),
+        index: z.number(),
+        logprobs: z
+          .object({
+            content: z
+              .array(
+                z.object({
+                  token: z.string(),
+                  logprob: z.number(),
+                  top_logprobs: z.array(
+                    z.object({
+                      token: z.string(),
+                      logprob: z.number(),
+                    })
+                  ),
+                })
+              )
+              .nullish(),
+          })
+          .nullish(),
+        finish_reason: z.string().nullish(),
+      })
+    )
+    .optional(),
   usage: z
     .object({
       completion_tokens: z.number(),
@@ -98,7 +100,15 @@ const adaptiveChatResponseSchema = z.object({
     })
     .optional(),
   system_fingerprint: z.string().optional(),
-  provider: z.string(),
+  provider: z.string().optional(),
+  error: z
+    .object({
+      message: z.string(),
+      type: z.string(),
+      param: z.any().nullish(),
+      code: z.any().nullish(),
+    })
+    .optional(),
 });
 
 const adaptiveChatChunkSchema = z.union([
@@ -298,7 +308,16 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
       throw new Error('Failed to parse Adaptive API response');
     }
 
-    const choice = value?.choices[0];
+    // Handle error responses
+    if (value.error) {
+      throw new Error(`Adaptive API Error: ${value.error.message}`);
+    }
+
+    if (!value.choices || value.choices.length === 0) {
+      throw new Error('No choices returned from Adaptive API');
+    }
+
+    const choice = value.choices[0];
     const content: Array<LanguageModelV2Content> = [];
 
     if (choice.message?.content) {
