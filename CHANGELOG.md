@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.4.0
+
+### Minor Changes
+
+- 3b7290b: Update adaptive provider options for new api naming
+
 ## 1.3.1
 
 ### Patch Changes
