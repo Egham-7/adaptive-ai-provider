@@ -278,6 +278,21 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
     const args: AdaptiveChatCompletionRequest = {
       ...standardizedArgs,
       ...(logitBias ? { logit_bias: logitBias } : {}),
+      ...(adaptiveOptions.model_router
+        ? { model_router: adaptiveOptions.model_router }
+        : {}),
+      ...(adaptiveOptions.fallback
+        ? { fallback: adaptiveOptions.fallback }
+        : {}),
+      ...(adaptiveOptions.prompt_response_cache
+        ? { prompt_response_cache: adaptiveOptions.prompt_response_cache }
+        : {}),
+      ...(adaptiveOptions.prompt_cache
+        ? { prompt_cache: adaptiveOptions.prompt_cache }
+        : {}),
+      ...(adaptiveOptions.provider_configs
+        ? { provider_configs: adaptiveOptions.provider_configs }
+        : {}),
       ...(adaptiveOptions.semantic_cache
         ? { semantic_cache: adaptiveOptions.semantic_cache }
         : {}),
@@ -437,6 +452,8 @@ export class AdaptiveChatLanguageModel implements LanguageModelV2 {
         inputTokens: undefined as number | undefined,
         outputTokens: undefined as number | undefined,
         totalTokens: undefined as number | undefined,
+        reasoningTokens: undefined as number | undefined,
+        cachedInputTokens: undefined as number | undefined,
       } as LanguageModelV2Usage,
       isFirstChunk: true,
       isActiveText: false,

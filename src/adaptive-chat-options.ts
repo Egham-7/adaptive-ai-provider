@@ -7,27 +7,31 @@ const adaptiveSemanticCacheOptions = z.object({
   semantic_threshold: z.number().optional(),
 });
 
-const modelCapabilitySchema = z.object({
-  description: z.string().optional(),
+const modelSchema = z.object({
   provider: z.string(),
-  model_name: z.string(),
-  cost_per_1m_input_tokens: z.number(),
-  cost_per_1m_output_tokens: z.number(),
-  max_context_tokens: z.number(),
+  model_name: z.string().optional(),
+  cost_per_1m_input_tokens: z.number().optional(),
+  cost_per_1m_output_tokens: z.number().optional(),
+  max_context_tokens: z.number().optional(),
   max_output_tokens: z.number().optional(),
-  supports_function_calling: z.boolean(),
-  languages_supported: z.array(z.string()).optional(),
-  model_size_params: z.string().optional(),
-  latency_tier: z.string().optional(),
+  supports_function_calling: z.boolean().optional(),
   task_type: z.string().optional(),
   complexity: z.string().optional(),
 });
 
-const protocolManagerConfigSchema = z.object({
-  models: z.array(modelCapabilitySchema).optional(),
+const modelRouterConfigSchema = z.object({
+  models: z.array(modelSchema).optional(),
   cost_bias: z.number().optional(),
   complexity_threshold: z.number().optional(),
   token_threshold: z.number().optional(),
+});
+
+const providerConfigSchema = z.object({
+  base_url: z.string().optional(),
+  api_key: z.string().optional(),
+  auth_type: z.string().optional(),
+  headers: z.record(z.string(), z.string()).optional(),
+  timeout_ms: z.number().optional(),
 });
 
 const promptCacheConfigSchema = z.object({
@@ -36,8 +40,13 @@ const promptCacheConfigSchema = z.object({
 });
 
 const fallbackConfigSchema = z.object({
-  enabled: z.boolean().optional(), // Whether fallback is enabled (default: true)
-  mode: z.enum(['sequential', 'parallel']).optional(), // Fallback mode (sequential/parallel)
+  enabled: z.boolean().optional(),
+  mode: z.enum(['sequential', 'parallel']).optional(),
+});
+
+const promptResponseCacheConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  ttl: z.number().optional(),
 });
 
 /**
@@ -46,7 +55,6 @@ const fallbackConfigSchema = z.object({
 export const adaptiveProviderOptions = z.object({
   /**
    * Modify the likelihood of specified tokens appearing in the completion.
-   * Accepts a JSON object that maps tokens (specified by their token ID) to a bias value from -100 to 100.
    */
   logit_bias: z.record(z.string(), z.number()).optional(),
   /**
@@ -62,25 +70,29 @@ export const adaptiveProviderOptions = z.object({
    */
   user: z.string().optional(),
   /**
-   * Cost bias for optimization.
+   * Intelligent routing configuration.
    */
-  cost_bias: z.number().optional(),
+  model_router: modelRouterConfigSchema.optional(),
   /**
-   * Semantic cache configuration.
+   * Provider fallback behavior.
    */
-  semantic_cache: adaptiveSemanticCacheOptions.optional(),
+  fallback: fallbackConfigSchema.optional(),
   /**
-   * Protocol manager configuration for model selection and optimization.
+   * Semantic caching configuration.
    */
-  protocol_manager: protocolManagerConfigSchema.optional(),
+  prompt_response_cache: promptResponseCacheConfigSchema.optional(),
   /**
-   * Prompt cache configuration.
+   * Ultra-fast caching configuration.
    */
   prompt_cache: promptCacheConfigSchema.optional(),
   /**
-   * Fallback configuration with enabled toggle.
+   * Custom provider configurations.
    */
-  fallback: fallbackConfigSchema.optional(),
+  provider_configs: z.record(z.string(), providerConfigSchema).optional(),
+  /**
+   * Semantic cache configuration (legacy).
+   */
+  semantic_cache: adaptiveSemanticCacheOptions.optional(),
 });
 
 /**

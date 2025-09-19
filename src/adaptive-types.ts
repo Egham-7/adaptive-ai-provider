@@ -13,14 +13,12 @@ export interface AdaptiveChatCompletionRequest {
   frequency_penalty?: number;
   logit_bias?: Record<string, number>;
   user?: string;
-  cost_bias?: number;
-  semantic_cache?: {
-    enabled?: boolean;
-    semantic_threshold?: number;
-  };
-  /**
-   * Optional stream options for streaming requests.
-   */
+  model_router?: AdaptiveModelRouterConfig;
+  fallback?: AdaptiveFallbackConfig;
+  prompt_response_cache?: AdaptivePromptResponseCacheConfig;
+  prompt_cache?: AdaptivePromptCacheConfig;
+  provider_configs?: Record<string, AdaptiveProviderConfig>;
+  semantic_cache?: AdaptiveSemanticCacheConfig;
   stream_options?: {
     include_usage?: boolean;
   };
@@ -119,6 +117,74 @@ export interface AdaptiveChatCompletionResponse {
   }>;
   usage?: AdaptiveChatCompletionUsage;
   provider: string;
+}
+
+/**
+ * Model configuration for intelligent routing.
+ */
+export interface AdaptiveModelConfig {
+  provider: string;
+  model_name?: string;
+  cost_per_1m_input_tokens?: number;
+  cost_per_1m_output_tokens?: number;
+  max_context_tokens?: number;
+  max_output_tokens?: number;
+  supports_function_calling?: boolean;
+  task_type?: string;
+  complexity?: string;
+}
+
+/**
+ * Model router configuration for intelligent model selection.
+ */
+export interface AdaptiveModelRouterConfig {
+  models?: AdaptiveModelConfig[];
+  cost_bias?: number;
+  complexity_threshold?: number;
+  token_threshold?: number;
+}
+
+/**
+ * Fallback configuration for provider resiliency.
+ */
+export interface AdaptiveFallbackConfig {
+  enabled?: boolean;
+  mode?: 'sequential' | 'parallel';
+}
+
+/**
+ * Prompt response cache configuration.
+ */
+export interface AdaptivePromptResponseCacheConfig {
+  enabled?: boolean;
+  ttl?: number;
+}
+
+/**
+ * Prompt cache configuration.
+ */
+export interface AdaptivePromptCacheConfig {
+  enabled: boolean;
+  ttl: number;
+}
+
+/**
+ * Custom provider configuration.
+ */
+export interface AdaptiveProviderConfig {
+  base_url?: string;
+  api_key?: string;
+  auth_type?: string;
+  headers?: Record<string, string>;
+  timeout_ms?: number;
+}
+
+/**
+ * Semantic cache configuration.
+ */
+export interface AdaptiveSemanticCacheConfig {
+  enabled?: boolean;
+  semantic_threshold?: number;
 }
 
 /**
