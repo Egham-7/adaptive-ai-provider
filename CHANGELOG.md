@@ -1,5 +1,11 @@
 # @ai-sdk/adaptive
 
+## 1.4.1
+
+### Patch Changes
+
+- 5f6fe92: update deps
+
 ## 1.4.0
 
 ### Minor Changes
